@@ -479,7 +479,8 @@ def clean_db_loop():
     while True:
         try:
             clean_database()
-            time.sleep(30)
+            log.info('Regular database cleaning complete')
+            time.sleep(60)
         except Exception as e:
             log.exception('Exception in clean_db: %s', e)
 
