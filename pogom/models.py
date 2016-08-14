@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 import logging
 import calendar
 import sys
@@ -24,7 +23,7 @@ log = logging.getLogger(__name__)
 args = get_args()
 flaskDb = FlaskDB()
 
-db_schema_version = 4
+db_schema_version = 5
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -188,6 +187,23 @@ class Pokemon(BaseModel):
             appearances.append(a)
         return appearances
 
+    @classmethod
+    def get_spawnpoints(cls, swLat, swLng, neLat, neLng):
+        query = Pokemon.select(Pokemon.latitude, Pokemon.longitude, Pokemon.spawnpoint_id)
+
+        if None not in (swLat, swLng, neLat, neLng):
+            query = (query
+                     .where((Pokemon.latitude >= swLat) &
+                            (Pokemon.longitude >= swLng) &
+                            (Pokemon.latitude <= neLat) &
+                            (Pokemon.longitude <= neLng)
+                            )
+                     )
+
+        query = query.group_by(Pokemon.spawnpoint_id).dicts()
+
+        return list(query)
+
 
 class Pokestop(BaseModel):
     pokestop_id = CharField(primary_key=True, max_length=50)
@@ -312,9 +328,14 @@ def parse_map(map_dict, step_location):
     for cell in cells:
         if config['parse_pokemon']:
             for p in cell.get('wild_pokemons', []):
-                d_t = datetime.utcfromtimestamp(
-                    (p['last_modified_timestamp_ms'] +
-                     p['time_till_hidden_ms']) / 1000.0)
+                # time_till_hidden_ms was overflowing causing a negative integer. It was also returning a value above 3.6M ms.
+                if (0 < p['time_till_hidden_ms'] < 3600000):
+                    d_t = datetime.utcfromtimestamp(
+                        (p['last_modified_timestamp_ms'] +
+                         p['time_till_hidden_ms']) / 1000.0)
+                else:
+                    # Set a value of 15 minutes because currently its unknown but larger than 15.
+                    d_t = datetime.utcfromtimestamp((p['last_modified_timestamp_ms'] + 900000) / 1000.0)
                 printPokemon(p['pokemon_data']['pokemon_id'], p['latitude'],
                              p['longitude'], d_t)
                 pokemons[p['encounter_id']] = {
@@ -405,92 +426,6 @@ def clean_database():
         query.execute()
 
 
-def bulk_upsert(cls, data):
-    num_rows = len(data.values())
-    i = 0
-    step = 120
-
-    while i < num_rows:
-        log.debug('Inserting items %d to %d', i, min(i + step, num_rows))
-        try:
-            InsertQuery(cls, rows=data.values()[i:min(i + step, num_rows)]).upsert().execute()
-        except Exception as e:
-            log.warning('%s... Retrying', e)
-            continue
-
-        i += step
-
-
-def create_tables(db):
-    db.connect()
-    verify_database_schema(db)
-    db.create_tables([Pokemon, Pokestop, Gym, ScannedLocation], safe=True)
-    db.close()
-
-
-def drop_tables(db):
-    db.connect()
-    db.drop_tables([Pokemon, Pokestop, Gym, ScannedLocation, Versions], safe=True)
-    db.close()
-
-
-def verify_database_schema(db):
-    if not Versions.table_exists():
-        db.create_tables([Versions])
-
-        if ScannedLocation.table_exists():
-            # Versions table didn't exist, but there were tables. This must mean the user
-            # is coming from a database that existed before we started tracking the schema
-            # version. Perform a full upgrade.
-            InsertQuery(Versions, {Versions.key: 'schema_version', Versions.val: 0}).execute()
-            database_migrate(db, 0)
-        else:
-            InsertQuery(Versions, {Versions.key: 'schema_version', Versions.val: db_schema_version}).execute()
-
-    else:
-        db_ver = Versions.get(Versions.key == 'schema_version').val
-
-        if db_ver < db_schema_version:
-            database_migrate(db, db_ver)
-
-        elif db_ver > db_schema_version:
-            log.error("Your database version (%i) appears to be newer than the code supports (%i).",
-                      db_ver, db_schema_version)
-            log.error("Please upgrade your code base or drop all tables in your database.")
-            sys.exit(1)
-
-
-def database_migrate(db, old_ver):
-    log.info("Detected database version %i, updating to %i", old_ver, db_schema_version)
-
-    # Perform migrations here
-    migrator = None
-    if args.db_type == 'mysql':
-        migrator = MySQLMigrator(db)
-    else:
-        migrator = SqliteMigrator(db)
-
-#   No longer necessary, we're doing this at schema 4 as well
-#    if old_ver < 1:
-#        db.drop_tables([ScannedLocation])
-
-    if old_ver < 2:
-        migrate(migrator.add_column('pokestop', 'encounter_id', CharField(max_length=50, null=True)))
-
-    if old_ver < 3:
-        migrate(
-            migrator.add_column('pokestop', 'active_fort_modifier', CharField(max_length=50, null=True)),
-            migrator.drop_column('pokestop', 'encounter_id'),
-            migrator.drop_column('pokestop', 'active_pokemon_id')
-        )
-
-    if old_ver < 4:
-        db.drop_tables([ScannedLocation])
-
-    # Update database schema version
-    Versions.update(val=db_schema_version).where(Versions.key == 'schema_version').execute()
-
-
 def db_updater(args, q):
     # The forever loop
     while True:
@@ -569,3 +504,98 @@ def db_updater(args, q):
 
         except Exception as e:
             log.exception('Exception in db_updater: %s', e)
+
+
+def bulk_upsert(cls, data):
+    num_rows = len(data.values())
+    i = 0
+    step = 120
+
+    while i < num_rows:
+        log.debug('Inserting items %d to %d', i, min(i + step, num_rows))
+        try:
+            InsertQuery(cls, rows=data.values()[i:min(i + step, num_rows)]).upsert().execute()
+        except Exception as e:
+            log.warning('%s... Retrying', e)
+            continue
+
+        i += step
+
+
+def create_tables(db):
+    db.connect()
+    verify_database_schema(db)
+    db.create_tables([Pokemon, Pokestop, Gym, ScannedLocation], safe=True)
+    db.close()
+
+
+def drop_tables(db):
+    db.connect()
+    db.drop_tables([Pokemon, Pokestop, Gym, ScannedLocation, Versions], safe=True)
+    db.close()
+
+
+def verify_database_schema(db):
+    if not Versions.table_exists():
+        db.create_tables([Versions])
+
+        if ScannedLocation.table_exists():
+            # Versions table didn't exist, but there were tables. This must mean the user
+            # is coming from a database that existed before we started tracking the schema
+            # version. Perform a full upgrade.
+            InsertQuery(Versions, {Versions.key: 'schema_version', Versions.val: 0}).execute()
+            database_migrate(db, 0)
+        else:
+            InsertQuery(Versions, {Versions.key: 'schema_version', Versions.val: db_schema_version}).execute()
+
+    else:
+        db_ver = Versions.get(Versions.key == 'schema_version').val
+
+        if db_ver < db_schema_version:
+            database_migrate(db, db_ver)
+
+        elif db_ver > db_schema_version:
+            log.error("Your database version (%i) appears to be newer than the code supports (%i).",
+                      db_ver, db_schema_version)
+            log.error("Please upgrade your code base or drop all tables in your database.")
+            sys.exit(1)
+
+
+def database_migrate(db, old_ver):
+    # Update database schema version
+    Versions.update(val=db_schema_version).where(Versions.key == 'schema_version').execute()
+
+    log.info("Detected database version %i, updating to %i", old_ver, db_schema_version)
+
+    # Perform migrations here
+    migrator = None
+    if args.db_type == 'mysql':
+        migrator = MySQLMigrator(db)
+    else:
+        migrator = SqliteMigrator(db)
+
+#   No longer necessary, we're doing this at schema 4 as well
+#    if old_ver < 1:
+#        db.drop_tables([ScannedLocation])
+
+    if old_ver < 2:
+        migrate(migrator.add_column('pokestop', 'encounter_id', CharField(max_length=50, null=True)))
+
+    if old_ver < 3:
+        migrate(
+            migrator.add_column('pokestop', 'active_fort_modifier', CharField(max_length=50, null=True)),
+            migrator.drop_column('pokestop', 'encounter_id'),
+            migrator.drop_column('pokestop', 'active_pokemon_id')
+        )
+
+    if old_ver < 4:
+        db.drop_tables([ScannedLocation])
+        
+    if old_ver < 5:
+        # Some pokemon were added before the 595 bug was "fixed"
+        # Clean those up for a better UX
+        query = (Pokemon
+                 .delete()
+                 .where(Pokemon.disappear_time >
+                        (datetime.utcnow() - timedelta(hours=24))))
+        query.execute()
