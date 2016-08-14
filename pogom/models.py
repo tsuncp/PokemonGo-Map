@@ -590,7 +590,7 @@ def database_migrate(db, old_ver):
 
     if old_ver < 4:
         db.drop_tables([ScannedLocation])
-        
+
     if old_ver < 5:
         # Some pokemon were added before the 595 bug was "fixed"
         # Clean those up for a better UX
