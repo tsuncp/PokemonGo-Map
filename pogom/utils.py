@@ -9,7 +9,6 @@ import json
 from datetime import datetime, timedelta
 import logging
 import shutil
-import requests
 import platform
 import pprint
 import time
@@ -297,26 +296,6 @@ def get_pokemon_rarity(pokemon_id):
 def get_pokemon_types(pokemon_id):
     pokemon_types = get_pokemon_data(pokemon_id)['types']
     return map(lambda x: {"type": i8ln(x['type']), "color": x['color']}, pokemon_types)
-
-
-def send_to_webhook(message_type, message):
-    args = get_args()
-
-    data = {
-        'type': message_type,
-        'message': message
-    }
-
-    if args.webhooks:
-        webhooks = args.webhooks
-
-        for w in webhooks:
-            try:
-                requests.post(w, json=data, timeout=(None, 1))
-            except requests.exceptions.ReadTimeout:
-                log.debug('Response timeout on webhook endpoint %s', w)
-            except requests.exceptions.RequestException as e:
-                log.debug(e)
 
 
 def get_encryption_lib_path():

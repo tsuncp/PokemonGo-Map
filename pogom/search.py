@@ -290,17 +290,9 @@ def search_worker_thread(args, account, search_items_queue, parse_lock, encrypti
                     # with parse_lock:
                     #     t.add('lkaq')
                     try:
-                        data = parse_map(response_dict, step_location)
+                        parse_map(args, response_dict, step_location, dbq, whq)
 
                         t.add('parse map')
-
-                        dbq.put(data)
-
-                        t.add('to db q')
-
-                        if args.webhooks:
-                            whq.put(data)
-                            t.add('to wh q')
 
                         log.debug('Search step %s completed', step)
                         search_items_queue.task_done()
