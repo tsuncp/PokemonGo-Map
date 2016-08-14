@@ -408,7 +408,7 @@ def parse_map(map_dict, step_location):
         'last_modified': datetime.utcnow(),
     }
 
-    return ( pokemons, pokestops, gyms, scanned )
+    return (pokemons, pokestops, gyms, scanned)
 
 
 def clean_database():

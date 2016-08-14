@@ -11,6 +11,8 @@ import logging
 import shutil
 import requests
 import platform
+import pprint
+import time
 
 from . import config
 
@@ -363,8 +365,6 @@ def get_encryption_lib_path():
 
     return lib_path
 
-import pprint
-import time
 
 class Timer():
 
@@ -373,11 +373,11 @@ class Timer():
 
     def add(self, step):
         t = time.time()
-        self.times.append( (step, t, round((t - self.times[-1][1]) * 1000)) )
+        self.times.append((step, t, round((t - self.times[-1][1]) * 1000)))
 
     def checkpoint(self, step):
         t = time.time()
-        self.times.append( ('total @ ' + step, t, t - self.times[0][1]) )
+        self.times.append(('total @ ' + step, t, t - self.times[0][1]))
 
     def output(self):
         self.checkpoint('end')
