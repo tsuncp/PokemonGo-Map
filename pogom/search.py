@@ -286,9 +286,7 @@ def search_worker_thread(args, account, search_items_queue, parse_lock, encrypti
                         time.sleep(sleep_time)
                         continue
 
-                    # Got the response, lock for parsing and do so (or fail, whatever)
-                    # with parse_lock:
-                    #     t.add('lkaq')
+                    # Got the response, parse it out, send todo's to db/wh queues
                     try:
                         parse_map(args, response_dict, step_location, dbq, whq)
 
