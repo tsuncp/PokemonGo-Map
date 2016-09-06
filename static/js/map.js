@@ -1344,7 +1344,7 @@ function setupPokemonMarker (item, skipNotification, isBounceDisabled) {
   }
   if (item['iv_attack'] != null) {
     var perfection = 100.0*(item['iv_attack']+item['iv_defense']+item['iv_stamina'])/45
-    if (perfection > notifiedMinPerfection) {
+    if (notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection) {
       if (!skipNotification) {
         if (Store.get('playSound')) {
           audio.play()
@@ -2249,7 +2249,14 @@ $(function () {
       Store.set('remember_select_rarity_notify', notifiedRarity)
     })
     $textPerfectionNotify.on('change', function (e) {
-      notifiedMinPerfection = $textPerfectionNotify.val()
+      notifiedMinPerfection = parseInt($textPerfectionNotify.val(), 10)
+      if (isNaN(notifiedMinPerfection) || notifiedMinPerfection <= 0) {
+        notifiedMinPerfection = ''
+      }
+      if (notifiedMinPerfection > 100) {
+        notifiedMinPerfection = 100
+      }
+      $textPerfectionNotify.val(notifiedMinPerfection)
       Store.set('remember_text_perfection_notify', notifiedMinPerfection)
     })
 
