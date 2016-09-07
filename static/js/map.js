@@ -1041,7 +1041,7 @@ function getTypeSpan (type) {
   return `<span style='padding: 2px 5px; text-transform: uppercase; color: white; margin-right: 2px; border-radius: 4px; font-size: 0.8em; vertical-align: text-bottom; background-color: ${type['color']}'>${type['type']}</span>`
 }
 
-function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitude, encounterId, iv_attack, iv_defense, iv_stamina) {
+function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitude, encounterId, ivAttack, ivDefense, ivStamina) {
   var disappearDate = new Date(disappearTime)
   var rarityDisplay = rarity ? '(' + rarity + ')' : ''
   var typesDisplay = ''
@@ -1050,11 +1050,11 @@ function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitu
   })
 
   var ivstring = ''
-  if (iv_attack != null) {
-    var perfect = ((iv_attack+iv_defense+iv_stamina)/45*100).toFixed(1)+'%'
+  if (ivAttack != null) {
+    var perfect = ((ivAttack + ivDefense + ivStamina) / 45 * 100).toFixed(1) + '%'
     ivstring = `
       <div>
-        Attack ${iv_attack}, Defense ${iv_defense}, Stamina ${iv_stamina}: ${perfect}
+        Attack ${ivAttack}, Defense ${ivDefense}, Stamina ${ivStamina}: ${perfect}
       </div>`
   }
 
@@ -1343,7 +1343,7 @@ function setupPokemonMarker (item, skipNotification, isBounceDisabled) {
     }
   }
   if (item['iv_attack'] != null) {
-    var perfection = 100.0*(item['iv_attack']+item['iv_defense']+item['iv_stamina'])/45
+    var perfection = 100.0 * (item['iv_attack'] + item['iv_defense'] + item['iv_stamina']) / 45
     if (notifiedMinPerfection > 0 && perfection >= notifiedMinPerfection) {
       if (!skipNotification) {
         if (Store.get('playSound')) {
@@ -1356,7 +1356,6 @@ function setupPokemonMarker (item, skipNotification, isBounceDisabled) {
       }
     }
   }
-
 
   addListeners(marker)
   return marker
