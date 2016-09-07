@@ -675,7 +675,7 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
                     for pokemon in parsed['pokemons'].values():
                         status['message'] = \
                             'Getting IVs for encounter {}' \
-                                .format(b64decode(pokemon['encounter_id']))
+                            .format(b64decode(pokemon['encounter_id']))
                         time.sleep(random.random() + 2)
                         response = encounter_request(api, pokemon, args.jitter)
                         if response['responses']['ENCOUNTER']['status'] != 1:
@@ -684,14 +684,13 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
                         else:
                             encounter = response['responses']['ENCOUNTER']
                             data = encounter['wild_pokemon']['pokemon_data']
-                            pokemon_ivs = { pokemon['encounter_id']: {
+                            pokemon_ivs = {pokemon['encounter_id']: {
                                 'encounter_id': pokemon['encounter_id'],
                                 'iv_attack': data.get('individual_attack', 0),
                                 'iv_defense': data.get('individual_defense', 0),
                                 'iv_stamina': data.get('individual_stamina', 0)
-                            } }
+                            }}
                             dbq.put((PokemonIVs, pokemon_ivs))
-
 
                 # Get detailed information about gyms
                 if args.gym_info and parsed:

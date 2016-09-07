@@ -311,10 +311,10 @@ class Pokemon(BaseModel):
 
     @classmethod
     def seen_before(cls, encounter_id):
-      return (Pokemon
-              .select()
-              .where(Pokemon.encounter_id == encounter_id)
-              .exists())
+        return (Pokemon
+                .select()
+                .where(Pokemon.encounter_id == encounter_id)
+                .exists())
 
 
 class PokemonIVs(BaseModel):
