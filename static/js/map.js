@@ -1693,15 +1693,26 @@ function processPokemons (i, item) {
     return false // in case the checkbox was unchecked in the meantime.
   }
 
-  if (!(item['encounter_id'] in mapData.pokemons) &&
-    excludedPokemon.indexOf(item['pokemon_id']) < 0) {
+  var encounterId = item['encounter_id']
+  if ((!(encounterId in mapData.pokemons) ||
+       mapData.pokemons[encounterId]['iv_attack'] !== item['iv_attack']) &&
+      excludedPokemon.indexOf(item['pokemon_id']) < 0) {
     // add marker to map and item to dict
     if (item.marker) {
       item.marker.setMap(null)
     }
+    var oldMarker = mapData.pokemons[encounterId]
+    if (oldMarker != null) {
+      if (oldMarker.marker.rangeCircle) {
+        oldMarker.marker.rangeCircle.setMap(null)
+        delete oldMarker.marker.rangeCircle
+      }
+      oldMarker.marker.setMap(null)
+      delete mapData.pokemons[encounterId].marker
+    }
     if (!item.hidden) {
       item.marker = setupPokemonMarker(item)
-      mapData.pokemons[item['encounter_id']] = item
+      mapData.pokemons[encounterId] = item
     }
   }
 }
