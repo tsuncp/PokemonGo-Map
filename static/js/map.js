@@ -40,212 +40,6 @@ var selectedStyle = 'light'
 
 var gymTypes = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
 var audio = new Audio('static/sounds/ding.mp3')
-<<<<<<< HEAD
-=======
-var pokemonSprites = {
-  normal: {
-    columns: 12,
-    iconWidth: 30,
-    iconHeight: 30,
-    spriteWidth: 360,
-    spriteHeight: 390,
-    filename: 'static/icons-sprite.png',
-    name: 'Normal'
-  },
-  highres: {
-    columns: 7,
-    iconWidth: 65,
-    iconHeight: 65,
-    spriteWidth: 455,
-    spriteHeight: 1430,
-    filename: 'static/icons-large-sprite.png',
-    name: 'High-Res'
-  },
-  shuffle: {
-    columns: 7,
-    iconWidth: 65,
-    iconHeight: 65,
-    spriteWidth: 455,
-    spriteHeight: 1430,
-    filename: 'static/icons-shuffle-sprite.png',
-    name: 'Shuffle'
-  }
-}
-
-//
-// LocalStorage helpers
-//
-
-var StoreTypes = {
-  Boolean: {
-    parse: function (str) {
-      switch (str.toLowerCase()) {
-        case '1':
-        case 'true':
-        case 'yes':
-          return true
-        default:
-          return false
-      }
-    },
-    stringify: function (b) {
-      return b ? 'true' : 'false'
-    }
-  },
-  JSON: {
-    parse: function (str) {
-      return JSON.parse(str)
-    },
-    stringify: function (json) {
-      return JSON.stringify(json)
-    }
-  },
-  String: {
-    parse: function (str) {
-      return str
-    },
-    stringify: function (str) {
-      return str
-    }
-  },
-  Number: {
-    parse: function (str) {
-      return parseInt(str, 10)
-    },
-    stringify: function (number) {
-      return number.toString()
-    }
-  }
-}
-
-var StoreOptions = {
-  'map_style': {
-    default: 'roadmap',
-    type: StoreTypes.String
-  },
-  'remember_select_exclude': {
-    default: [],
-    type: StoreTypes.JSON
-  },
-  'remember_select_notify': {
-    default: [],
-    type: StoreTypes.JSON
-  },
-  'remember_select_rarity_notify': {
-    default: [],
-    type: StoreTypes.JSON
-  },
-  'remember_text_perfection_notify': {
-    default: '',
-    type: StoreTypes.Number
-  },
-  'showGyms': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'showPokemon': {
-    default: true,
-    type: StoreTypes.Boolean
-  },
-  'showPokestops': {
-    default: true,
-    type: StoreTypes.Boolean
-  },
-  'showLuredPokestopsOnly': {
-    default: 0,
-    type: StoreTypes.Number
-  },
-  'showScanned': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'showSpawnpoints': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'showRanges': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'playSound': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'geoLocate': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'lockMarker': {
-    default: isTouchDevice(), // default to true if touch device
-    type: StoreTypes.Boolean
-  },
-  'startAtUserLocation': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'followMyLocation': {
-    default: false,
-    type: StoreTypes.Boolean
-  },
-  'followMyLocationPosition': {
-    default: [],
-    type: StoreTypes.JSON
-  },
-  'pokemonIcons': {
-    default: 'highres',
-    type: StoreTypes.String
-  },
-  'iconSizeModifier': {
-    default: 0,
-    type: StoreTypes.Number
-  },
-  'searchMarkerStyle': {
-    default: 'google',
-    type: StoreTypes.String
-  },
-  'locationMarkerStyle': {
-    default: 'none',
-    type: StoreTypes.String
-  },
-  'zoomLevel': {
-    default: 16,
-    type: StoreTypes.Number
-  }
-}
-
-var Store = {
-  getOption: function (key) {
-    var option = StoreOptions[key]
-    if (!option) {
-      throw new Error('Store key was not defined ' + key)
-    }
-    return option
-  },
-  get: function (key) {
-    var option = this.getOption(key)
-    var optionType = option.type
-    var rawValue = localStorage[key]
-    if (rawValue === null || rawValue === undefined) {
-      return option.default
-    }
-    var value = optionType.parse(rawValue)
-    return value
-  },
-  set: function (key, value) {
-    var option = this.getOption(key)
-    var optionType = option.type || StoreTypes.String
-    var rawValue = optionType.stringify(value)
-    localStorage[key] = rawValue
-  },
-  reset: function (key) {
-    localStorage.removeItem(key)
-  }
-}
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
-
-//
-// Functions
-//
 
 function excludePokemon (id) { // eslint-disable-line no-unused-vars
   $selectExclude.val(
@@ -511,11 +305,7 @@ function openMapDirections (lat, lng) { // eslint-disable-line no-unused-vars
   window.open(url, '_blank')
 }
 
-<<<<<<< HEAD
-function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitude, encounterId, isLured) {
-=======
-function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitude, encounterId, ivAttack, ivDefense, ivStamina) {
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
+function pokemonLabel (name, rarity, types, disappearTime, id, latitude, longitude, encounterId, isLured, ivAttack, ivDefense, ivStamina) {
   var disappearDate = new Date(disappearTime)
   var rarityDisplay = rarity ? '(' + rarity + ')' : ''
   var typesDisplay = ''
@@ -761,11 +551,7 @@ function customizePokemonMarker (marker, item, skipNotification) {
   }
 
   marker.infoWindow = new google.maps.InfoWindow({
-<<<<<<< HEAD
-    content: pokemonLabel(item['pokemon_name'], item['pokemon_rarity'], item['pokemon_types'], item['disappear_time'], item['pokemon_id'], item['latitude'], item['longitude'], item['encounter_id'], isLured),
-=======
-    content: pokemonLabel(item['pokemon_name'], item['pokemon_rarity'], item['pokemon_types'], item['disappear_time'], item['pokemon_id'], item['latitude'], item['longitude'], item['encounter_id'], item['iv_attack'], item['iv_defense'], item['iv_stamina']),
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
+    content: pokemonLabel(item['pokemon_name'], item['pokemon_rarity'], item['pokemon_types'], item['disappear_time'], item['pokemon_id'], item['latitude'], item['longitude'], item['encounter_id'], isLured, item['iv_attack'], item['iv_defense'], item['iv_stamina']),
     disableAutoPan: true
   })
 
@@ -1148,14 +934,9 @@ function processPokemons (i, item) {
       delete mapData.pokemons[encounterId].marker
     }
     if (!item.hidden) {
-<<<<<<< HEAD
       item.marker = setupPokemonMarker(item, map)
       customizePokemonMarker(item.marker, item)
       mapData.pokemons[item['encounter_id']] = item
-=======
-      item.marker = setupPokemonMarker(item)
-      mapData.pokemons[encounterId] = item
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
     }
   }
 }
