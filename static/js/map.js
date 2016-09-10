@@ -532,7 +532,6 @@ function isRangeActive (map) {
 }
 
 function customizePokemonMarker (marker, item, skipNotification) {
->>>>>>> refs/remotes/PokemonGoMap/develop
   marker.addListener('click', function () {
     this.setAnimation(null)
     this.animationDisabled = true
