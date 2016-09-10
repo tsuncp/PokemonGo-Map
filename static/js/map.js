@@ -531,35 +531,6 @@ function isRangeActive (map) {
   return Store.get('showRanges')
 }
 
-<<<<<<< HEAD
-function setupPokemonMarker (item, skipNotification, isBounceDisabled) {
-  // Scale icon size up with the map exponentially
-  var iconSize = 2 + (map.getZoom() - 3) * (map.getZoom() - 3) * 0.2 + Store.get('iconSizeModifier')
-  var pokemonIndex = item['pokemon_id'] - 1
-  var sprite = pokemonSprites[Store.get('pokemonIcons')] || pokemonSprites['highres']
-  var icon = getGoogleSprite(pokemonIndex, sprite, iconSize)
-
-  // if a pokestop_id is present, then this pokemon is lured
-  var isLured = item['pokestop_id'] !== null
-
-  var animationDisabled = false
-  if (isBounceDisabled === true) {
-    animationDisabled = true
-  }
-
-  var marker = new google.maps.Marker({
-    position: {
-      // if the pokemon is lured, offset its location a tiny bit since otherwise it completely covers the pokestop
-      lat: (!isLured) ? item['latitude'] : (item['latitude'] + 0.0001),
-      lng: (!isLured) ? item['longitude'] : (item['longitude'] + 0.0001)
-    },
-    zIndex: 9999,
-    map: map,
-    icon: icon,
-    animationDisabled: animationDisabled
-  })
-
-=======
 function customizePokemonMarker (marker, item, skipNotification) {
 >>>>>>> refs/remotes/PokemonGoMap/develop
   marker.addListener('click', function () {
