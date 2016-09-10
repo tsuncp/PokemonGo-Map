@@ -36,7 +36,6 @@ from pgoapi import utilities as util
 from pgoapi.exceptions import AuthException
 
 from .models import parse_map, Pokemon, PokemonIVs, hex_bounds, GymDetails, parse_gyms, MainWorker, WorkerStatus
-from .transform import generate_location_steps
 from .fakePogoApi import FakePogoApi
 from .utils import now
 import schedulers
