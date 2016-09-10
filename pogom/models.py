@@ -30,7 +30,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 8
+db_schema_version = 7
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -78,8 +78,7 @@ class Pokemon(BaseModel):
     # We are base64 encoding the ids delivered by the api
     # because they are too big for sqlite to handle
     encounter_id = CharField(primary_key=True, max_length=50)
-    spawnpoint_id = CharField(index=True, null=True)
-    pokestop_id = CharField(null=True)
+    spawnpoint_id = CharField(index=True)
     pokemon_id = IntegerField(index=True)
     latitude = DoubleField()
     longitude = DoubleField()
@@ -206,20 +205,14 @@ class Pokemon(BaseModel):
         '''
         :param pokemon_id: id of pokemon that we need appearances for
         :param timediff: limiting period of the selection
-        :return: list of pokemon appearances over a selected period (excluding lured appearances)
+        :return: list of  pokemon  appearances over a selected period
         '''
         if timediff:
             timediff = datetime.utcnow() - timediff
         query = (Pokemon
                  .select(Pokemon.latitude, Pokemon.longitude, Pokemon.pokemon_id, fn.Count(Pokemon.spawnpoint_id).alias('count'), Pokemon.spawnpoint_id)
                  .where((Pokemon.pokemon_id == pokemon_id) &
-<<<<<<< HEAD
-                        (Pokemon.disappear_time > datetime.utcfromtimestamp(last_appearance / 1000.0)) &
-                        (Pokemon.disappear_time > timediff) &
-                        (Pokemon.spawnpoint_id.is_null(False))
-=======
                         (Pokemon.disappear_time > timediff)
->>>>>>> refs/remotes/PokemonGoMap/develop
                         )
                  .group_by(Pokemon.latitude, Pokemon.longitude, Pokemon.pokemon_id, Pokemon.spawnpoint_id)
                  .dicts()
@@ -255,12 +248,7 @@ class Pokemon(BaseModel):
 
     @classmethod
     def get_spawnpoints(cls, southBoundary, westBoundary, northBoundary, eastBoundary):
-        query = (Pokemon.select(Pokemon.latitude,
-                                Pokemon.longitude,
-                                Pokemon.spawnpoint_id,
-                                ((Pokemon.disappear_time.minute * 60) + Pokemon.disappear_time.second).alias('time'),
-                                fn.Count(Pokemon.spawnpoint_id).alias('count'))
-                 .where(Pokemon.spawnpoint_id.is_null(False)))
+        query = Pokemon.select(Pokemon.latitude, Pokemon.longitude, Pokemon.spawnpoint_id, ((Pokemon.disappear_time.minute * 60) + Pokemon.disappear_time.second).alias('time'), fn.Count(Pokemon.spawnpoint_id).alias('count'))
 
         if None not in (northBoundary, southBoundary, westBoundary, eastBoundary):
             query = (query
@@ -300,16 +288,17 @@ class Pokemon(BaseModel):
 
         n, e, s, w = hex_bounds(center, steps)
 
-        query = (Pokemon.select(Pokemon.latitude.alias('lat'),
-                                Pokemon.longitude.alias('lng'),
-                                ((Pokemon.disappear_time.minute * 60) + Pokemon.disappear_time.second).alias('time'),
-                                Pokemon.spawnpoint_id)
-                        .where((Pokemon.latitude <= n) &
-                               (Pokemon.latitude >= s) &
-                               (Pokemon.longitude >= w) &
-                               (Pokemon.longitude <= e) &
-                               (Pokemon.spawnpoint_id.is_null(False))))
-
+        query = (Pokemon
+                 .select(Pokemon.latitude.alias('lat'),
+                         Pokemon.longitude.alias('lng'),
+                         ((Pokemon.disappear_time.minute * 60) + Pokemon.disappear_time.second).alias('time'),
+                         Pokemon.spawnpoint_id
+                         ))
+        query = (query.where((Pokemon.latitude <= n) &
+                             (Pokemon.latitude >= s) &
+                             (Pokemon.longitude >= w) &
+                             (Pokemon.longitude <= e)
+                             ))
         # Sqlite doesn't support distinct on columns
         if args.db_type == 'mysql':
             query = query.distinct(Pokemon.spawnpoint_id)
@@ -609,9 +598,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                 pokemons[p['encounter_id']] = {
                     'encounter_id': b64encode(str(p['encounter_id'])),
                     'spawnpoint_id': p['spawn_point_id'],
-                    # Lured and non-lured pokemon both go into the `pokemons` collection
-                    # to be upserted, so we need to keep their columns the same
-                    'pokestop_id': None,
                     'pokemon_id': p['pokemon_data']['pokemon_id'],
                     'latitude': p['latitude'],
                     'longitude': p['longitude'],
@@ -633,7 +619,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
         for f in cell.get('forts', []):
             if config['parse_pokestops'] and f.get('type') == 1:  # Pokestops
                 if 'active_fort_modifier' in f:
-                    lure_info = f.get('lure_info')
                     lure_expiration = datetime.utcfromtimestamp(
                         f['last_modified_timestamp_ms'] / 1000.0) + timedelta(minutes=30)
                     active_fort_modifier = f['active_fort_modifier']
@@ -647,31 +632,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                             'lure_expiration': calendar.timegm(lure_expiration.timetuple()),
                             'active_fort_modifier': active_fort_modifier
                         }))
-
-                    if lure_info is not None and config['parse_pokemon']:
-                        d_t = datetime.utcfromtimestamp(lure_info['lure_expires_timestamp_ms'] / 1000)
-                        pokemons[lure_info['encounter_id']] = {
-                            'encounter_id': b64encode(str(lure_info['encounter_id'])),
-                            # Lured and non-lured pokemon both go into the `pokemons` collection
-                            # to be upserted, so we need to keep their columns the same
-                            'spawnpoint_id': None,
-                            'pokestop_id': b64encode(str(f['id'])),
-                            'pokemon_id': lure_info['active_pokemon_id'],
-                            'latitude': f['latitude'],
-                            'longitude': f['longitude'],
-                            'disappear_time': d_t
-                        }
-
-                        if args.webhooks:
-                            wh_update_queue.put(('lured_pokemon', {
-                                'encounter_id': b64encode(str(lure_info['encounter_id'])),
-                                'pokestop_id': b64encode(str(f['id'])),
-                                'pokemon_id': lure_info['active_pokemon_id'],
-                                'latitude': f['latitude'],
-                                'longitude': f['longitude'],
-                                'disappear_time': calendar.timegm(d_t.timetuple()),
-                            }))
-
                 else:
                     lure_expiration, active_fort_modifier = None, None
 
@@ -1048,10 +1008,4 @@ def database_migrate(db, old_ver):
         migrate(
             migrator.drop_column('gymdetails', 'description'),
             migrator.add_column('gymdetails', 'description', TextField(null=True, default=""))
-        )
-
-    if old_ver < 8:
-        migrate(
-            migrator.drop_not_null('pokemon', 'spawnpoint_id'),
-            migrator.add_column('pokemon', 'pokestop_id', CharField(null=True))
         )
