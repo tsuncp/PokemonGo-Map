@@ -621,7 +621,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
 
                 printPokemon(p['pokemon_data']['pokemon_id'], p['latitude'],
                              p['longitude'], d_t)
-<<<<<<< HEAD
                 pokemons[p['encounter_id']] = {
                     'encounter_id': b64encode(str(p['encounter_id'])),
                     'spawnpoint_id': p['spawn_point_id'],
@@ -633,7 +632,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                     'longitude': p['longitude'],
                     'disappear_time': d_t
                 }
-=======
                 b64encounter_id = b64encode(str(p['encounter_id']))
                 if (not Pokemon.seen_before(b64encounter_id)):
                     pokemons[p['encounter_id']] = {
@@ -644,8 +642,6 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                         'longitude': p['longitude'],
                         'disappear_time': d_t
                     }
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
-
                 if args.webhooks:
                     wh_update_queue.put(('pokemon', {
                         'encounter_id': b64encode(str(p['encounter_id'])),
@@ -1080,11 +1076,9 @@ def database_migrate(db, old_ver):
         )
 
     if old_ver < 8:
-<<<<<<< HEAD
         migrate(
             migrator.drop_not_null('pokemon', 'spawnpoint_id'),
             migrator.add_column('pokemon', 'pokestop_id', CharField(null=True))
         )
-=======
+    if old_ver < 9:
         db.create_tables([PokemonIVs], safe=True)
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
