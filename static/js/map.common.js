@@ -826,6 +826,8 @@ function setupPokemonMarker (item, map, isBounceDisabled) {
   var pokemonIndex = item['pokemon_id'] - 1
   var sprite = pokemonSprites[Store.get('pokemonIcons')] || pokemonSprites['highres']
   var icon = getGoogleSprite(pokemonIndex, sprite, iconSize)
+  // if a pokestop_id is present, then this pokemon is lured
+  var isLured = item['pokestop_id'] !== null
 
   var animationDisabled = false
   if (isBounceDisabled === true) {
@@ -834,8 +836,9 @@ function setupPokemonMarker (item, map, isBounceDisabled) {
 
   var marker = new google.maps.Marker({
     position: {
-      lat: item['latitude'],
-      lng: item['longitude']
+      // if the pokemon is lured, offset its location a tiny bit since otherwise it completely covers the pokestop
+      lat: (!isLured) ? item['latitude'] : (item['latitude'] + 0.0001),
+      lng: (!isLured) ? item['longitude'] : (item['longitude'] + 0.0001)
     },
     zIndex: 9999,
     map: map,
