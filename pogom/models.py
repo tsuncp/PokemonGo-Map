@@ -30,7 +30,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 8
+db_schema_version = 9
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
