@@ -28,13 +28,19 @@ import geopy.distance
 from datetime import datetime
 from threading import Thread
 from queue import Queue, Empty
+from base64 import b64decode
 
 from pgoapi import PGoApi
 from pgoapi.utilities import f2i
 from pgoapi import utilities as util
 from pgoapi.exceptions import AuthException
 
+<<<<<<< HEAD
 from .models import parse_map, GymDetails, parse_gyms, MainWorker, WorkerStatus
+=======
+from .models import parse_map, Pokemon, PokemonIVs, hex_bounds, GymDetails, parse_gyms, MainWorker, WorkerStatus
+from .transform import generate_location_steps
+>>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
 from .fakePogoApi import FakePogoApi
 from .utils import now
 import schedulers
@@ -513,6 +519,28 @@ def search_worker_thread(args, account_queue, account_failures, search_items_que
                     status['message'] = 'Map parse failed at {:6f},{:6f}, abandoning location. {} may be banned.'.format(step_location[0], step_location[1], account['username'])
                     log.exception(status['message'])
 
+                if args.get_ivs and parsed:
+                    # Get pokemon IVs
+                    for pokemon in parsed['pokemons'].values():
+                        status['message'] = \
+                            'Getting IVs for encounter {}' \
+                            .format(b64decode(pokemon['encounter_id']))
+                        time.sleep(random.random() + 2)
+                        response = encounter_request(api, pokemon, args.jitter)
+                        if response['responses']['ENCOUNTER']['status'] != 1:
+                            log.warning('Pokemon encounter {} failed'.format(
+                                        b64decode(pokemon['encounter_id'])))
+                        else:
+                            encounter = response['responses']['ENCOUNTER']
+                            data = encounter['wild_pokemon']['pokemon_data']
+                            pokemon_ivs = {pokemon['encounter_id']: {
+                                'encounter_id': pokemon['encounter_id'],
+                                'iv_attack': data.get('individual_attack', 0),
+                                'iv_defense': data.get('individual_defense', 0),
+                                'iv_stamina': data.get('individual_stamina', 0)
+                            }}
+                            dbq.put((PokemonIVs, pokemon_ivs))
+
                 # Get detailed information about gyms
                 if args.gym_info and parsed:
                     # build up a list of gyms to update
@@ -630,6 +658,24 @@ def map_request(api, position, jitter=False):
                                    cell_id=cell_ids)
     except Exception as e:
         log.warning('Exception while downloading map: %s', e)
+        return False
+
+
+def encounter_request(api, pokemon, jitter=False):
+    position = [pokemon['latitude'], pokemon['longitude'], 0]
+    if jitter:
+        scan_location = jitterLocation(position)
+    else:
+        scan_location = position
+
+    try:
+        encounter_id = long(b64decode(pokemon['encounter_id']))
+        return api.encounter(encounter_id=encounter_id,
+                             spawn_point_id=pokemon['spawnpoint_id'],
+                             player_latitude=scan_location[0],
+                             player_longitude=scan_location[1])
+    except Exception as e:
+        log.warning('Exception while downloading pokemon ivs: %s', e)
         return False
 
 

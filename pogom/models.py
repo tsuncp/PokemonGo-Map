@@ -9,7 +9,7 @@ import time
 import geopy
 from peewee import SqliteDatabase, InsertQuery, \
     IntegerField, CharField, DoubleField, BooleanField, \
-    DateTimeField, fn, DeleteQuery, CompositeKey, FloatField, SQL, TextField
+    DateTimeField, fn, DeleteQuery, CompositeKey, FloatField, SQL, TextField, JOIN
 from playhouse.flask_utils import FlaskDB
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.shortcuts import RetryOperationalError
@@ -92,12 +92,18 @@ class Pokemon(BaseModel):
     def get_active(swLat, swLng, neLat, neLng):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             query = (Pokemon
-                     .select()
+                     .select(PokemonIVs, Pokemon)
+                     .join(PokemonIVs,
+                           join_type=JOIN.LEFT_OUTER,
+                           on=(Pokemon.encounter_id == PokemonIVs.encounter_id))
                      .where(Pokemon.disappear_time > datetime.utcnow())
                      .dicts())
         else:
             query = (Pokemon
-                     .select()
+                     .select(PokemonIVs, Pokemon)
+                     .join(PokemonIVs,
+                           join_type=JOIN.LEFT_OUTER,
+                           on=(Pokemon.encounter_id == PokemonIVs.encounter_id))
                      .where((Pokemon.disappear_time > datetime.utcnow()) &
                             (((Pokemon.latitude >= swLat) &
                               (Pokemon.longitude >= swLng) &
@@ -333,6 +339,20 @@ class Pokemon(BaseModel):
             location['time'] = cls.get_spawn_time(location['time'])
 
         return filtered
+
+    @classmethod
+    def seen_before(cls, encounter_id):
+        return (Pokemon
+                .select()
+                .where(Pokemon.encounter_id == encounter_id)
+                .exists())
+
+
+class PokemonIVs(BaseModel):
+    encounter_id = CharField(primary_key=True, max_length=50)
+    iv_defense = IntegerField()
+    iv_stamina = IntegerField()
+    iv_attack = IntegerField()
 
 
 class Pokestop(BaseModel):
@@ -601,6 +621,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
 
                 printPokemon(p['pokemon_data']['pokemon_id'], p['latitude'],
                              p['longitude'], d_t)
+<<<<<<< HEAD
                 pokemons[p['encounter_id']] = {
                     'encounter_id': b64encode(str(p['encounter_id'])),
                     'spawnpoint_id': p['spawn_point_id'],
@@ -612,6 +633,18 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                     'longitude': p['longitude'],
                     'disappear_time': d_t
                 }
+=======
+                b64encounter_id = b64encode(str(p['encounter_id']))
+                if (not Pokemon.seen_before(b64encounter_id)):
+                    pokemons[p['encounter_id']] = {
+                        'encounter_id': b64encounter_id,
+                        'spawnpoint_id': p['spawn_point_id'],
+                        'pokemon_id': p['pokemon_data']['pokemon_id'],
+                        'latitude': p['latitude'],
+                        'longitude': p['longitude'],
+                        'disappear_time': d_t
+                    }
+>>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
 
                 if args.webhooks:
                     wh_update_queue.put(('pokemon', {
@@ -748,6 +781,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
 
     return {
         'count': len(pokemons) + len(pokestops) + len(gyms),
+        'pokemons': pokemons,
         'gyms': gyms,
     }
 
@@ -959,13 +993,13 @@ def bulk_upsert(cls, data):
 def create_tables(db):
     db.connect()
     verify_database_schema(db)
-    db.create_tables([Pokemon, Pokestop, Gym, ScannedLocation, GymDetails, GymMember, GymPokemon, Trainer, MainWorker, WorkerStatus], safe=True)
+    db.create_tables([Pokemon, PokemonIVs, Pokestop, Gym, ScannedLocation, GymDetails, GymMember, GymPokemon, Trainer, MainWorker, WorkerStatus], safe=True)
     db.close()
 
 
 def drop_tables(db):
     db.connect()
-    db.drop_tables([Pokemon, Pokestop, Gym, ScannedLocation, Versions, GymDetails, GymMember, GymPokemon, Trainer, MainWorker, WorkerStatus, Versions], safe=True)
+    db.drop_tables([Pokemon, PokemonIVs, Pokestop, Gym, ScannedLocation, Versions, GymDetails, GymMember, GymPokemon, Trainer, MainWorker, WorkerStatus, Versions], safe=True)
     db.close()
 
 
@@ -1046,7 +1080,11 @@ def database_migrate(db, old_ver):
         )
 
     if old_ver < 8:
+<<<<<<< HEAD
         migrate(
             migrator.drop_not_null('pokemon', 'spawnpoint_id'),
             migrator.add_column('pokemon', 'pokestop_id', CharField(null=True))
         )
+=======
+        db.create_tables([PokemonIVs], safe=True)
+>>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
