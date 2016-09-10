@@ -213,13 +213,8 @@ class Pokemon(BaseModel):
         query = (Pokemon
                  .select(Pokemon.latitude, Pokemon.longitude, Pokemon.pokemon_id, fn.Count(Pokemon.spawnpoint_id).alias('count'), Pokemon.spawnpoint_id)
                  .where((Pokemon.pokemon_id == pokemon_id) &
-<<<<<<< HEAD
-                        (Pokemon.disappear_time > datetime.utcfromtimestamp(last_appearance / 1000.0)) &
                         (Pokemon.disappear_time > timediff) &
                         (Pokemon.spawnpoint_id.is_null(False))
-=======
-                        (Pokemon.disappear_time > timediff)
->>>>>>> refs/remotes/PokemonGoMap/develop
                         )
                  .group_by(Pokemon.latitude, Pokemon.longitude, Pokemon.pokemon_id, Pokemon.spawnpoint_id)
                  .dicts()
