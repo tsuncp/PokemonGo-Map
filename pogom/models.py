@@ -621,22 +621,15 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
 
                 printPokemon(p['pokemon_data']['pokemon_id'], p['latitude'],
                              p['longitude'], d_t)
-                pokemons[p['encounter_id']] = {
-                    'encounter_id': b64encode(str(p['encounter_id'])),
-                    'spawnpoint_id': p['spawn_point_id'],
-                    # Lured and non-lured pokemon both go into the `pokemons` collection
-                    # to be upserted, so we need to keep their columns the same
-                    'pokestop_id': None,
-                    'pokemon_id': p['pokemon_data']['pokemon_id'],
-                    'latitude': p['latitude'],
-                    'longitude': p['longitude'],
-                    'disappear_time': d_t
-                }
+
                 b64encounter_id = b64encode(str(p['encounter_id']))
                 if (not Pokemon.seen_before(b64encounter_id)):
                     pokemons[p['encounter_id']] = {
-                        'encounter_id': b64encounter_id,
+                        'encounter_id': b64encode(str(p['encounter_id'])),
                         'spawnpoint_id': p['spawn_point_id'],
+                        # Lured and non-lured pokemon both go into the `pokemons` collection
+                        # to be upserted, so we need to keep their columns the same
+                        'pokestop_id': None,
                         'pokemon_id': p['pokemon_data']['pokemon_id'],
                         'latitude': p['latitude'],
                         'longitude': p['longitude'],
