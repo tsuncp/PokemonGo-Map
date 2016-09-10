@@ -35,12 +35,8 @@ from pgoapi.utilities import f2i
 from pgoapi import utilities as util
 from pgoapi.exceptions import AuthException
 
-<<<<<<< HEAD
-from .models import parse_map, GymDetails, parse_gyms, MainWorker, WorkerStatus
-=======
 from .models import parse_map, Pokemon, PokemonIVs, hex_bounds, GymDetails, parse_gyms, MainWorker, WorkerStatus
 from .transform import generate_location_steps
->>>>>>> refs/remotes/owraight/PokemonGo-Map/develop/develop
 from .fakePogoApi import FakePogoApi
 from .utils import now
 import schedulers
