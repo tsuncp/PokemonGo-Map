@@ -20,6 +20,7 @@ var languageLookupThreshold = 3
 
 var searchMarkerStyles
 
+var timestamp
 var excludedPokemon = []
 var notifiedPokemon = []
 var notifiedRarity = []
@@ -891,6 +892,7 @@ function loadRawData () {
     url: 'raw_data',
     type: 'GET',
     data: {
+      'timestamp': timestamp,
       'pokemon': loadPokemon,
       'pokestops': loadPokestops,
       'gyms': loadGyms,
@@ -1036,6 +1038,7 @@ function updateMap () {
     $.each(result.gyms, processGyms)
     $.each(result.scanned, processScanned)
     $.each(result.spawnpoints, processSpawnpoints)
+    timestamp = result.timestamp
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
     showInBoundsMarkers(mapData.gyms, 'gym')

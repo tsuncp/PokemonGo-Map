@@ -83,6 +83,11 @@ class Pogom(Flask):
         swLng = request.args.get('swLng')
         neLat = request.args.get('neLat')
         neLng = request.args.get('neLng')
+        if request.args.get('timestamp') > 1:
+            prevtime = int(float(request.args.get('timestamp')))
+            d['prevstamp'] = prevtime
+        timestamp = datetime.utcnow()
+        d['timestamp'] = timestamp
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
                 ids = [int(x) for x in request.args.get('ids').split(',')]
@@ -92,7 +97,10 @@ class Pogom(Flask):
                 d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng)
 
         if request.args.get('pokestops', 'true') == 'true':
-            d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)
+            if prevtime == 0:
+                d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)
+            else:
+                d['pokestops'] = Pokestop.get_modified_stops(swLat, swLng, neLat, neLng, prevtime)
 
         if request.args.get('gyms', 'true') == 'true':
             d['gyms'] = Gym.get_gyms(swLat, swLng, neLat, neLng)
@@ -131,7 +139,6 @@ class Pogom(Flask):
             elif request.args.get('password', None) == args.status_page_password:
                 d['main_workers'] = MainWorker.get_all()
                 d['workers'] = WorkerStatus.get_all()
-
         return jsonify(d)
 
     def loc(self):

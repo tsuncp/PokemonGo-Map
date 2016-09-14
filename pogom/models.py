@@ -371,6 +371,37 @@ class Pokestop(BaseModel):
 
         return pokestops
 
+    @staticmethod
+    def get_modified_stops(swLat, swLng, neLat, neLng, timestamp):
+        if swLat is None or swLng is None or neLat is None or neLng is None:
+            query = (Pokestop
+                     .select()
+                     .dicts())
+        else:
+            query = (Pokestop
+                     .select()
+                     .where((Pokestop.latitude >= swLat) &
+                            (Pokestop.longitude >= swLng) &
+                            (Pokestop.latitude <= neLat) &
+                            (Pokestop.longitude <= neLng) &
+                            (Pokestop.last_modified >= time.localtime(timestamp/1000)))
+                     .dicts())
+
+        # Performance: Disable the garbage collector prior to creating a (potentially) large dict with append()
+        gc.disable()
+
+        pokestops = []
+        for p in query:
+            if args.china:
+                p['latitude'], p['longitude'] = \
+                    transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
+            pokestops.append(p)
+
+        # Re-enable the GC.
+        gc.enable()
+
+        return pokestops
+
 
 class Gym(BaseModel):
     UNCONTESTED = 0
