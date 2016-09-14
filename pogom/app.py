@@ -83,6 +83,7 @@ class Pogom(Flask):
         swLng = request.args.get('swLng')
         neLat = request.args.get('neLat')
         neLng = request.args.get('neLng')
+        prevtime = 0
         if request.args.get('timestamp') > 1:
             prevtime = int(float(request.args.get('timestamp')))
             d['prevstamp'] = prevtime
