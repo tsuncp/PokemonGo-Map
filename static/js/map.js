@@ -51,28 +51,27 @@ function excludePokemon (id) { // eslint-disable-line no-unused-vars
 
 function getIncludedPokemon (excludedPokemon = []) { // eslint-disable-line no-unused-vars
   var includedPokemon = ''
-  var notfound=true
-  var counter=0
+  var notfound = true
+  var counter = 0
   if (excludedPokemon.length > 0 && excludedPokemon.length < 151) { // If no or all pokemon are excluded no need to loop
-    for (var i=1;i <= 151; i++) {
-      notfound=true
-      if (i => excludedPokemon[0] && i < excludedPokemon[excludedPokemon.length-1] ) {
-        if (i == excludedPokemon[counter]) {
-          console.log("counter="+String(counter)+'\n')
-          notfound=false
+    for (var i = 1; i <= 151; i++) {
+      notfound = true
+      if (i => excludedPokemon[0] && i < excludedPokemon[excludedPokemon.length-1]) {
+        if (i === excludedPokemon[counter]) {
+          notfound = false
           counter++
-        } 
+        }
       }
 
       if (notfound) {
-        if (includedPokemon == '') {
+        if (includedPokemon === '') {
           includedPokemon = String(i)
         } else {
           includedPokemon = includedPokemon + ',' + String(i)
         }
       }
     }
-  } else if (excludedPokemon.length == 151) { // If all pokemon are hidden (lol why?) use unused pokemon id, an empty string would return all Pokémon
+  } else if (excludedPokemon.length === 151) { // If all pokemon are hidden (lol why?) use unused pokemon id, an empty string would return all Pokémon
     includedPokemon = '0'
   }
   return includedPokemon
