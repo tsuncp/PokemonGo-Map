@@ -384,7 +384,7 @@ class Pokestop(BaseModel):
                             (Pokestop.longitude >= swLng) &
                             (Pokestop.latitude <= neLat) &
                             (Pokestop.longitude <= neLng) &
-                            (Pokestop.last_modified >= time.localtime(timestamp/1000)))
+                            (Pokestop.last_modified >= time.localtime(timestamp / 1000)))
                      .dicts())
 
         # Performance: Disable the garbage collector prior to creating a (potentially) large dict with append()
