@@ -56,7 +56,7 @@ function getIncludedPokemon (excludedPokemon = []) { // eslint-disable-line no-u
   if (excludedPokemon.length > 0 && excludedPokemon.length < 151) { // If no or all pokemon are excluded no need to loop
     for (var i = 1; i <= 151; i++) {
       notfound = true
-      if (i => excludedPokemon[0] && i < excludedPokemon[excludedPokemon.length-1]) {
+      if (i => excludedPokemon[0] && i < excludedPokemon[excludedPokemon.length - 1]) {
         if (i === excludedPokemon[counter]) {
           notfound = false
           counter++
