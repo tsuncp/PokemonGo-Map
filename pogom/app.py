@@ -111,19 +111,19 @@ class Pogom(Flask):
             d['pokestopNeLat'] = pokestopNeLat
             d['pokestopNeLng'] = pokestopNeLng
             if pokestopSwLat != swLat:
-              d['pokestopSwLat'] = swLat
-              newArea = True
+                d['pokestopSwLat'] = swLat
+                newArea = True
             if pokestopSwLng != swLng:
-              d['pokestopSwLng'] = swLng
-              newArea = True
+                d['pokestopSwLng'] = swLng
+                newArea = True
             if pokestopNeLat != neLat:
-              d['pokestopNeLat'] = neLat
-              newArea = True
+                d['pokestopNeLat'] = neLat
+                newArea = True
             if pokestopNeLng != neLng:
-              d['pokestopNeLng'] = neLng
-              newArea = True
+                d['pokestopNeLng'] = neLng
+                newArea = True
 
-            if prevtime == 0: 
+            if prevtime == 0:
                 d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)
             else:
                 d['pokestops'] = Pokestop.get_modified_stops(swLat, swLng, neLat, neLng, prevtime)
