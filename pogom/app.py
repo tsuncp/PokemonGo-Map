@@ -104,6 +104,9 @@ class Pogom(Flask):
                                                          neLat, neLng)
             else:
                 d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng)
+            if request.args.get('eids'):
+                eids = [int(x) for x in request.args.get('eids').split(',')]
+                d['pokemons'] = [x for x in d['pokemons'] if x['pokemon_id'] not in eids]
 
         if request.args.get('pokestops', 'true') == 'true':
             d['pokestopSwLat'] = pokestopSwLat
