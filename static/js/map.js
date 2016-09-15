@@ -33,6 +33,11 @@ var searchMarker
 var storeZoom = true
 var scanPath
 
+var pokestopSwLat 
+var pokestopSwLng 
+var pokestopNeLat 
+var pokestopNeLng 
+
 
 var selectedStyle = 'light'
 
@@ -902,6 +907,10 @@ function loadRawData () {
       'swLng': swLng,
       'neLat': neLat,
       'neLng': neLng,
+      'pokestopSwLat': pokestopSwLat,
+      'pokestopSwLng': pokestopSwLng,
+      'pokestopNeLat': pokestopNeLat,
+      'pokestopNeLng': pokestopNeLng,
       'ids': includedPokemon
     },
     dataType: 'json',
@@ -1039,6 +1048,11 @@ function updateMap () {
     $.each(result.scanned, processScanned)
     $.each(result.spawnpoints, processSpawnpoints)
     timestamp = result.timestamp
+    pokestopSwLat = result.pokestopSwLat
+    pokestopSwLng = result.pokestopSwLng
+    pokestopNeLat = result.pokestopNeLat
+    pokestopNeLng = result.pokestopNeLng
+    
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
     showInBoundsMarkers(mapData.gyms, 'gym')
