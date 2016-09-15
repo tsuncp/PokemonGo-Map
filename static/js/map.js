@@ -33,10 +33,10 @@ var searchMarker
 var storeZoom = true
 var scanPath
 
-var pokestopSwLat 
-var pokestopSwLng 
-var pokestopNeLat 
-var pokestopNeLng 
+var pokestopSwLat
+var pokestopSwLng
+var pokestopNeLat
+var pokestopNeLng
 
 
 var selectedStyle = 'light'
@@ -1052,7 +1052,7 @@ function updateMap () {
     pokestopSwLng = result.pokestopSwLng
     pokestopNeLat = result.pokestopNeLat
     pokestopNeLng = result.pokestopNeLng
-    
+
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
     showInBoundsMarkers(mapData.gyms, 'gym')
