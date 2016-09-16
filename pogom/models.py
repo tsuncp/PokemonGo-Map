@@ -419,7 +419,7 @@ class Gym(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_gyms(swLat, swLng, neLat, neLng, timestamp = 0 , oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
+    def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             results = (Gym
                        .select()
