@@ -30,7 +30,7 @@ args = get_args()
 flaskDb = FlaskDB()
 cache = TTLCache(maxsize=100, ttl=60 * 5)
 
-db_schema_version = 7
+db_schema_version = 8
 
 
 class MyRetryDB(RetryOperationalError, PooledMySQLDatabase):
@@ -83,16 +83,38 @@ class Pokemon(BaseModel):
     latitude = DoubleField()
     longitude = DoubleField()
     disappear_time = DateTimeField(index=True)
+    last_modified = DateTimeField(index=True)
 
     class Meta:
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_active(swLat, swLng, neLat, neLng):
+    def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             query = (Pokemon
                      .select()
                      .where(Pokemon.disappear_time > datetime.utcnow())
+                     .dicts())
+        elif timestamp > 0:
+            query = (Pokemon
+                     .select()
+                     .where((Pokemon.latitude >= swLat) &
+                            (Pokemon.longitude >= swLng) &
+                            (Pokemon.latitude <= neLat) &
+                            (Pokemon.longitude <= neLng) &
+                            (Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                     .dicts())
+        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+            query = (Pokemon
+                     .select()
+                     .where(((Pokemon.latitude >= swLat) &
+                             (Pokemon.longitude >= swLng) &
+                             (Pokemon.latitude <= neLat) &
+                             (Pokemon.longitude <= neLng)) &
+                            ~((Pokemon.latitude >= oSwLat) &
+                              (Pokemon.longitude >= oSwLng) &
+                              (Pokemon.latitude <= oNeLat) &
+                              (Pokemon.longitude <= oNeLng)))
                      .dicts())
         else:
             query = (Pokemon
@@ -644,7 +666,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                     'pokemon_id': p['pokemon_data']['pokemon_id'],
                     'latitude': p['latitude'],
                     'longitude': p['longitude'],
-                    'disappear_time': d_t
+                    'disappear_time': d_t,
+                    'last_modified': datetime.utcnow()
                 }
 
                 if args.webhooks:
@@ -1051,4 +1074,9 @@ def database_migrate(db, old_ver):
         migrate(
             migrator.drop_column('gymdetails', 'description'),
             migrator.add_column('gymdetails', 'description', TextField(null=True, default=""))
+        )
+
+    if old_ver < 8:
+        migrate(
+            migrator.add_column('pokemon', 'last_modified', DateTimeField(null=True, index=True))
         )

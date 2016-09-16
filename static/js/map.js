@@ -40,7 +40,7 @@ var oNeLng
 
 var lastpokestops
 var lastgyms
-var lastpokemons
+var lastpokemon
 
 var selectedStyle = 'light'
 
@@ -873,7 +873,7 @@ function loadRawData () {
     type: 'GET',
     data: {
       'timestamp': timestamp,
-      'lastpokemons': lastpokemons,
+      'lastpokemon': lastpokemon,
       'pokemon': loadPokemon,
       'pokestops': loadPokestops,
       'lastpokestops': lastpokestops,
@@ -1033,7 +1033,7 @@ function updateMap () {
 
     lastgyms = result.lastgyms
     lastpokestops = result.lastpokestops
-    lastpokemons = result.lastpokemons
+    lastpokemon = result.lastpokemon
 
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
