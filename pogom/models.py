@@ -342,21 +342,21 @@ class Pokestop(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_stops(swLat, swLng, neLat, neLng, timestamp = 0, oSwLat = "", oSwLng = "", oNeLat = "", oNeLng = "" ):
+    def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             query = (Pokestop
                      .select()
                      .dicts())
         elif timestamp > 0:
             query = (Pokestop
-               .select()
-               .where((Pokestop.latitude >= swLat) &
-                      (Pokestop.longitude >= swLng) &
-                      (Pokestop.latitude <= neLat) &
-                      (Pokestop.longitude <= neLng) &
-                      (Pokestop.last_modified > time.localtime(timestamp / 1000)))
-               .dicts())
-        elif oSwLat > "" and oSwLng > ""  and oNeLat > "" and oNeLng > "":
+                     .select()
+                     .where((Pokestop.latitude >= swLat) &
+                            (Pokestop.longitude >= swLng) &
+                            (Pokestop.latitude <= neLat) &
+                            (Pokestop.longitude <= neLng) &
+                            (Pokestop.last_modified > time.localtime(timestamp / 1000)))
+                     .dicts())
+        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
             query = (Pokestop
                      .select()
                      .where((Pokestop.latitude >= swLat) &
@@ -419,7 +419,7 @@ class Gym(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_gyms(swLat, swLng, neLat, neLng, timestamp = 0 , oSwLat = "", oSwLng = "", oNeLat = "", oNeLng = "" ):
+    def get_gyms(swLat, swLng, neLat, neLng, timestamp = 0 , oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             results = (Gym
                        .select()
@@ -433,7 +433,7 @@ class Gym(BaseModel):
                               (Gym.longitude <= neLng) &
                               (Gym.last_modified > time.localtime(timestamp / 1000)))
                        .dicts())
-        elif oSwLat > "" and oSwLng > ""  and oNeLat > "" and oNeLng > "":
+        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
             results = (Gym
                        .select()
                        .where((Gym.latitude >= swLat) &

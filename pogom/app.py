@@ -93,7 +93,7 @@ class Pogom(Flask):
 
         lastgyms = request.args.get('lastgyms')
         lastpokestops = request.args.get('lastpokestops')
-        lastpokemons = request.args.get('lastpokemons')
+        lastpokemon = request.args.get('lastpokemon')
 
         d['lastgyms'] = request.args.get('gyms', 'true')
         d['lastpokestops'] = request.args.get('pokestops', 'true')
@@ -122,13 +122,12 @@ class Pogom(Flask):
             d['oNeLng'] = neLng
             newArea = True
 
-
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
                 ids = [int(x) for x in request.args.get('ids').split(',')]
                 d['pokemons'] = Pokemon.get_active_by_id(ids, swLat, swLng,
                                                          neLat, neLng)
-            else:
+            elif lastpokemon != 'true':
                 d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng)
             if request.args.get('eids'):
                 eids = [int(x) for x in request.args.get('eids').split(',')]
@@ -138,17 +137,17 @@ class Pogom(Flask):
             if lastpokestops != 'true':
                 d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)
             else:
-               d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng, timestamp = prevtime)
-               if newArea:
-                   d['pokestops'] = d['pokestops'] + (Pokestop.get_stops(swLat, swLng, neLat, neLng, oSwLat = oSwLat, oSwLng = oSwLng, oNeLat = oNeLat, oNeLng = oNeLng))
+                d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng, timestamp=prevtime)
+                if newArea:
+                    d['pokestops'] = d['pokestops'] + (Pokestop.get_stops(swLat, swLng, neLat, neLng, oSwLat=oSwLat, oSwLng=oSwLng, oNeLat=oNeLat, oNeLng=oNeLng))
 
         if request.args.get('gyms', 'true') == 'true':
            if lastgyms != 'true':
                d['gyms'] = Gym.get_gyms(swLat, swLng, neLat, neLng)
            else:
-               d['gyms'] = Gym.get_gyms(swLat, swLng, neLat, neLng, timestamp = prevtime)
+               d['gyms'] = Gym.get_gyms(swLat, swLng, neLat, neLng, timestamp=prevtime)
                if newArea:
-                   d['gyms'].update(Gym.get_gyms(swLat, swLng, neLat, neLng, oSwLat = oSwLat, oSwLng = oSwLng, oNeLat = oNeLat, oNeLng = oNeLng))
+                   d['gyms'].update(Gym.get_gyms(swLat, swLng, neLat, neLng, oSwLat=oSwLat, oSwLng=oSwLng, oNeLat=oNeLat, oNeLng=oNeLng))
 
         if request.args.get('scanned', 'true') == 'true':
             d['scanned'] = ScannedLocation.get_recent(swLat, swLng, neLat,
