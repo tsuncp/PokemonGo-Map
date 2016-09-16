@@ -342,12 +342,21 @@ class Pokestop(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_stops(swLat, swLng, neLat, neLng):
+    def get_stops(swLat, swLng, neLat, neLng, timestamp = 0, oSwLat = "", oSwLng = "", oNeLat = "", oNeLng = "" ):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             query = (Pokestop
                      .select()
                      .dicts())
-        else:
+        elif timestamp > 0:
+            query = (Pokestop
+               .select()
+               .where((Pokestop.latitude >= swLat) &
+                      (Pokestop.longitude >= swLng) &
+                      (Pokestop.latitude <= neLat) &
+                      (Pokestop.longitude <= neLng) &
+                      (Pokestop.last_modified > time.localtime(timestamp / 1000)))
+               .dicts())
+        elif oSwLat > "" and oSwLng > ""  and oNeLat > "" and oNeLng > "":
             query = (Pokestop
                      .select()
                      .where((Pokestop.latitude >= swLat) &
@@ -356,66 +365,23 @@ class Pokestop(BaseModel):
                             (Pokestop.longitude <= neLng))
                      .dicts())
 
-        # Performance: Disable the garbage collector prior to creating a (potentially) large dict with append()
-        gc.disable()
+            exquery = (Pokestop
+                       .select()
+                       .where((Pokestop.latitude >= oSwLat) &
+                              (Pokestop.longitude >= oSwLng) &
+                              (Pokestop.latitude <= oNeLat) &
+                              (Pokestop.longitude <= oNeLng))
+                       .dicts())
 
-        pokestops = []
-        for p in query:
-            if args.china:
-                p['latitude'], p['longitude'] = \
-                    transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
-            pokestops.append(p)
-
-        # Re-enable the GC.
-        gc.enable()
-
-        return pokestops
-
-    @staticmethod
-    def get_modified_stops(swLat, swLng, neLat, neLng, timestamp):
-        query = (Pokestop
-                 .select()
-                 .where((Pokestop.latitude >= swLat) &
-                        (Pokestop.longitude >= swLng) &
-                        (Pokestop.latitude <= neLat) &
-                        (Pokestop.longitude <= neLng) &
-                        (Pokestop.last_modified >= time.localtime(timestamp / 1000)))
-                 .dicts())
-
-        # Performance: Disable the garbage collector prior to creating a (potentially) large dict with append()
-        gc.disable()
-
-        pokestops = []
-        for p in query:
-            if args.china:
-                p['latitude'], p['longitude'] = \
-                    transform_from_wgs_to_gcj(p['latitude'], p['longitude'])
-            pokestops.append(p)
-
-        # Re-enable the GC.
-        gc.enable()
-
-        return pokestops
-
-    @staticmethod  # wip
-    def get_new_stops(swLat, swLng, neLat, neLng, pokestopSwLat, pokestopSwLng, pokestopNeLat, pokestopNeLng):
-        query = (Pokestop
-                 .select()
-                 .where((Pokestop.latitude >= swLat) &
-                        (Pokestop.longitude >= swLng) &
-                        (Pokestop.latitude <= neLat) &
-                        (Pokestop.longitude <= neLng))
-                 .dicts())
-
-        exquery = (Pokestop
-                   .select()
-                   .where((Pokestop.latitude >= pokestopSwLat) &
-                          (Pokestop.longitude >= pokestopSwLng) &
-                          (Pokestop.latitude <= pokestopNeLat) &
-                          (Pokestop.longitude <= pokestopNeLng))
-                   .dicts())
-
-        query = [x for x in query if x not in exquery]
+            query = [x for x in query if x not in exquery]
+        else:
+            query = (Pokestop
+                     .select()
+                     .where((Pokestop.latitude >= swLat) &
+                            (Pokestop.longitude >= swLng) &
+                            (Pokestop.latitude <= neLat) &
+                            (Pokestop.longitude <= neLng))
+                     .dicts())
 
         # Performance: Disable the garbage collector prior to creating a (potentially) large dict with append()
         gc.disable()
@@ -453,11 +419,39 @@ class Gym(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_gyms(swLat, swLng, neLat, neLng):
+    def get_gyms(swLat, swLng, neLat, neLng, timestamp = 0 , oSwLat = "", oSwLng = "", oNeLat = "", oNeLng = "" ):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             results = (Gym
                        .select()
                        .dicts())
+        elif timestamp > 0:
+            results = (Gym
+                       .select()
+                       .where((Gym.latitude >= swLat) &
+                              (Gym.longitude >= swLng) &
+                              (Gym.latitude <= neLat) &
+                              (Gym.longitude <= neLng) &
+                              (Gym.last_modified > time.localtime(timestamp / 1000)))
+                       .dicts())
+        elif oSwLat > "" and oSwLng > ""  and oNeLat > "" and oNeLng > "":
+            results = (Gym
+                       .select()
+                       .where((Gym.latitude >= swLat) &
+                              (Gym.longitude >= swLng) &
+                              (Gym.latitude <= neLat) &
+                              (Gym.longitude <= neLng))
+                       .dicts())
+
+            exresults = (Gym
+                         .select()
+                         .where((Gym.latitude >= oSwLat) &
+                                (Gym.longitude >= oSwLng) &
+                                (Gym.latitude <= oNeLat) &
+                                (Gym.longitude <= oNeLng))
+                         .dicts())
+
+            results = [x for x in results if x not in exresults]
+
         else:
             results = (Gym
                        .select()

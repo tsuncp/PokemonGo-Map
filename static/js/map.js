@@ -33,11 +33,14 @@ var searchMarker
 var storeZoom = true
 var scanPath
 
-var pokestopSwLat
-var pokestopSwLng
-var pokestopNeLat
-var pokestopNeLng
+var oSwLat
+var oSwLng
+var oNeLat
+var oNeLng
 
+var lastpokestops
+var lastgyms
+var lastpokemons
 
 var selectedStyle = 'light'
 
@@ -870,19 +873,22 @@ function loadRawData () {
     type: 'GET',
     data: {
       'timestamp': timestamp,
+      'lastpokemons': lastpokemons,
       'pokemon': loadPokemon,
       'pokestops': loadPokestops,
+      'lastpokestops': lastpokestops,
       'gyms': loadGyms,
+      'lastgyms': lastgyms,
       'scanned': loadScanned,
       'spawnpoints': loadSpawnpoints,
       'swLat': swLat,
       'swLng': swLng,
       'neLat': neLat,
       'neLng': neLng,
-      'pokestopSwLat': pokestopSwLat,
-      'pokestopSwLng': pokestopSwLng,
-      'pokestopNeLat': pokestopNeLat,
-      'pokestopNeLng': pokestopNeLng,
+      'oSwLat': oSwLat,
+      'oSwLng': oSwLng,
+      'oNeLat': oNeLat,
+      'oNeLng': oNeLng,
       'eids': String(excludedPokemon)
     },
     dataType: 'json',
@@ -1020,10 +1026,14 @@ function updateMap () {
     $.each(result.scanned, processScanned)
     $.each(result.spawnpoints, processSpawnpoints)
     timestamp = result.timestamp
-    pokestopSwLat = result.pokestopSwLat
-    pokestopSwLng = result.pokestopSwLng
-    pokestopNeLat = result.pokestopNeLat
-    pokestopNeLng = result.pokestopNeLng
+    oSwLat = result.oSwLat
+    oSwLng = result.oSwLng
+    oNeLat = result.oNeLat
+    oNeLng = result.oNeLng
+
+    lastgyms = result.lastgyms
+    lastpokestops = result.lastpokestops
+    lastpokemons = result.lastpokemons
 
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
