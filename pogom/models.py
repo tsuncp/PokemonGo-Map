@@ -359,21 +359,15 @@ class Pokestop(BaseModel):
         elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
             query = (Pokestop
                      .select()
-                     .where((Pokestop.latitude >= swLat) &
-                            (Pokestop.longitude >= swLng) &
-                            (Pokestop.latitude <= neLat) &
-                            (Pokestop.longitude <= neLng))
-                     .dicts())
-
-            exquery = (Pokestop
-                       .select()
-                       .where((Pokestop.latitude >= oSwLat) &
+                     .where(((Pokestop.latitude >= swLat) &
+                             (Pokestop.longitude >= swLng) &
+                             (Pokestop.latitude <= neLat) &
+                             (Pokestop.longitude <= neLng)) &
+                            ~((Pokestop.latitude >= oSwLat) &
                               (Pokestop.longitude >= oSwLng) &
                               (Pokestop.latitude <= oNeLat) &
-                              (Pokestop.longitude <= oNeLng))
-                       .dicts())
-
-            query = [x for x in query if x not in exquery]
+                              (Pokestop.longitude <= oNeLng)))
+                     .dicts())
         else:
             query = (Pokestop
                      .select()
@@ -436,21 +430,15 @@ class Gym(BaseModel):
         elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
             results = (Gym
                        .select()
-                       .where((Gym.latitude >= swLat) &
-                              (Gym.longitude >= swLng) &
-                              (Gym.latitude <= neLat) &
-                              (Gym.longitude <= neLng))
-                       .dicts())
-
-            exresults = (Gym
-                         .select()
-                         .where((Gym.latitude >= oSwLat) &
+                       .where(((Gym.latitude >= swLat) &
+                               (Gym.longitude >= swLng) &
+                               (Gym.latitude <= neLat) &
+                               (Gym.longitude <= neLng)) &
+                              ~((Gym.latitude >= oSwLat) &
                                 (Gym.longitude >= oSwLng) &
                                 (Gym.latitude <= oNeLat) &
-                                (Gym.longitude <= oNeLng))
-                         .dicts())
-
-            results = [x for x in results if x not in exresults]
+                                (Gym.longitude <= oNeLng)))
+                        .dicts())
 
         else:
             results = (Gym
