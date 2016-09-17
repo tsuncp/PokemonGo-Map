@@ -1078,5 +1078,5 @@ def database_migrate(db, old_ver):
 
     if old_ver < 8:
         migrate(
-            migrator.add_column('pokemon', 'last_modified', DateTimeField(null=True, index=True))
+            migrator.add_column('pokemon', 'last_modified', DateTimeField(null=True, index=True, default=None))
         )
