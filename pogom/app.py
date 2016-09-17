@@ -86,10 +86,15 @@ class Pogom(Flask):
         if request.args.get('pokemon', 'true') == 'true':
             if request.args.get('ids'):
                 ids = [int(x) for x in request.args.get('ids').split(',')]
-                d['pokemons'] = Pokemon.get_active_by_id(ids, swLat, swLng,
-                                                         neLat, neLng)
+                d['pokemons'] = Pokemon.get_active_by_id(ids, swLat, swLng, neLat, neLng)
             else:
-                d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng)
+                d['pokemons'] = Pokemon.get_active(swLat, swLng, neLat, neLng, timestamp=prevtime)
+                if newArea:
+                    d['pokemons'] = d['pokemons'] + (Pokemon.get_active(swLat, swLng, neLat, neLng, oSwLat=oSwLat, oSwLng=oSwLng, oNeLat=oNeLat, oNeLng=oNeLng))
+
+            if request.args.get('eids'):
+                eids = [int(x) for x in request.args.get('eids').split(',')]
+                d['pokemons'] = [x for x in d['pokemons'] if x['pokemon_id'] not in eids]
 
         if request.args.get('pokestops', 'true') == 'true':
             d['pokestops'] = Pokestop.get_stops(swLat, swLng, neLat, neLng)

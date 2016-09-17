@@ -633,7 +633,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                         'pokemon_id': p['pokemon_data']['pokemon_id'],
                         'latitude': p['latitude'],
                         'longitude': p['longitude'],
-                        'disappear_time': d_t
+                        'disappear_time': d_t,
+						'last_modified': datetime.utcnow()
                     }
                 if args.webhooks:
                     wh_update_queue.put(('pokemon', {
@@ -676,7 +677,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                             'pokemon_id': lure_info['active_pokemon_id'],
                             'latitude': f['latitude'],
                             'longitude': f['longitude'],
-                            'disappear_time': d_t
+                            'disappear_time': d_t,
+							'last_modified': datetime.utcnow()
                         }
 
                         if args.webhooks:
@@ -1071,7 +1073,8 @@ def database_migrate(db, old_ver):
     if old_ver < 8:
         migrate(
             migrator.drop_not_null('pokemon', 'spawnpoint_id'),
-            migrator.add_column('pokemon', 'pokestop_id', CharField(null=True))
+            migrator.add_column('pokemon', 'pokestop_id', CharField(null=True)),
+            migrator.add_column('pokemon', 'last_modified', DateTimeField(null=True, index=True, default=None))
         )
     if old_ver < 9:
         db.create_tables([PokemonIVs], safe=True)
