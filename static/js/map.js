@@ -21,6 +21,7 @@ var languageLookupThreshold = 3
 
 var searchMarkerStyles
 
+var timestamp
 var excludedPokemon = []
 var notifiedPokemon = []
 var notifiedRarity = []
@@ -34,6 +35,14 @@ var searchMarker
 var storeZoom = true
 var scanPath
 
+var oSwLat
+var oSwLng
+var oNeLat
+var oNeLng
+
+var lastpokestops
+var lastgyms
+var lastpokemon
 
 var selectedStyle = 'light'
 
@@ -46,6 +55,7 @@ function excludePokemon (id) { // eslint-disable-line no-unused-vars
     $selectExclude.val().concat(id)
   ).trigger('change')
 }
+
 
 function notifyAboutPokemon (id) { // eslint-disable-line no-unused-vars
   $selectPokemonNotify.val(
@@ -886,15 +896,24 @@ function loadRawData () {
     url: 'raw_data',
     type: 'GET',
     data: {
+      'timestamp': timestamp,
+      'lastpokemon': lastpokemon,
       'pokemon': loadPokemon,
       'pokestops': loadPokestops,
+      'lastpokestops': lastpokestops,
       'gyms': loadGyms,
+      'lastgyms': lastgyms,
       'scanned': loadScanned,
       'spawnpoints': loadSpawnpoints,
       'swLat': swLat,
       'swLng': swLng,
       'neLat': neLat,
-      'neLng': neLng
+      'neLng': neLng,
+      'oSwLat': oSwLat,
+      'oSwLng': oSwLng,
+      'oNeLat': oNeLat,
+      'oNeLng': oNeLng,
+      'eids': String(excludedPokemon)
     },
     dataType: 'json',
     cache: false,
@@ -1041,6 +1060,16 @@ function updateMap () {
     $.each(result.gyms, processGyms)
     $.each(result.scanned, processScanned)
     $.each(result.spawnpoints, processSpawnpoints)
+    timestamp = result.timestamp
+    oSwLat = result.oSwLat
+    oSwLng = result.oSwLng
+    oNeLat = result.oNeLat
+    oNeLng = result.oNeLng
+
+    lastgyms = result.lastgyms
+    lastpokestops = result.lastpokestops
+    lastpokemon = result.lastpokemon
+
     showInBoundsMarkers(mapData.pokemons, 'pokemon')
     showInBoundsMarkers(mapData.lurePokemons, 'pokemon')
     showInBoundsMarkers(mapData.gyms, 'gym')
