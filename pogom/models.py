@@ -697,7 +697,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                         'pokemon_id': p['pokemon_data']['pokemon_id'],
                         'latitude': p['latitude'],
                         'longitude': p['longitude'],
-                        'disappear_time': d_t
+                        'disappear_time': d_t,
+						'last_modified': datetime.utcnow()
                     }
                 if args.webhooks:
                     wh_update_queue.put(('pokemon', {
