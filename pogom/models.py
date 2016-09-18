@@ -89,32 +89,35 @@ class Pokemon(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
+    def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
         if swLat is None or swLng is None or neLat is None or neLng is None:
             query = (Pokemon
                      .select()
                      .where(Pokemon.disappear_time > datetime.utcnow())
                      .dicts())
-        elif timestamp > 0:
+        elif timestamp > 0 and not (oSwLat and oSwLng and oNeLat and oNeLng):
             query = (Pokemon
                      .select()
-                     .where((Pokemon.latitude >= swLat) &
-                            (Pokemon.longitude >= swLng) &
-                            (Pokemon.latitude <= neLat) &
-                            (Pokemon.longitude <= neLng) &
-                            (Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                     .where(((Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)) &
+                            (Pokemon.disappear_time > datetime.utcnow())) &
+                            (((Pokemon.latitude >= swLat) &
+                              (Pokemon.longitude >= swLng) &
+                              (Pokemon.latitude <= neLat) &
+                              (Pokemon.longitude <= neLng))))
                      .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+        elif timestamp > 0 and (oSwLat and oSwLng and oNeLat and oNeLng):
             query = (Pokemon
                      .select()
-                     .where(((Pokemon.latitude >= swLat) &
-                             (Pokemon.longitude >= swLng) &
-                             (Pokemon.latitude <= neLat) &
-                             (Pokemon.longitude <= neLng)) &
-                            ~((Pokemon.latitude >= oSwLat) &
+                     .where(((Pokemon.disappear_time > datetime.utcnow()) &
+                            (((Pokemon.latitude >= swLat) &
+                              (Pokemon.longitude >= swLng) &
+                              (Pokemon.latitude <= neLat) &
+                              (Pokemon.longitude <= neLng))) &
+                            ~((Pokemon.disappear_time > datetime.utcnow()) &
+                              (Pokemon.latitude >= oSwLat) &
                               (Pokemon.longitude >= oSwLng) &
                               (Pokemon.latitude <= oNeLat) &
-                              (Pokemon.longitude <= oNeLng)))
+                              (Pokemon.longitude <= oNeLng))))
                      .dicts())
         else:
             query = (Pokemon
