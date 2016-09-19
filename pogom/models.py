@@ -90,22 +90,22 @@ class Pokemon(BaseModel):
 
     @staticmethod
     def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+        if not (swLat or swLng or neLat or neLng):
             query = (Pokemon
                      .select()
                      .where(Pokemon.disappear_time > datetime.utcnow())
                      .dicts())
-        elif timestamp > 0 and not (oSwLat and oSwLng and oNeLat and oNeLng):
+        elif timestamp > 0:
             query = (Pokemon
                      .select()
                      .where(((Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)) &
-                            (Pokemon.disappear_time > datetime.utcnow())) &
-                            (((Pokemon.latitude >= swLat) &
-                              (Pokemon.longitude >= swLng) &
-                              (Pokemon.latitude <= neLat) &
-                              (Pokemon.longitude <= neLng))))
+                             (Pokemon.disappear_time > datetime.utcnow())) &
+                            ((Pokemon.latitude >= swLat) &
+                             (Pokemon.longitude >= swLng) &
+                             (Pokemon.latitude <= neLat) &
+                             (Pokemon.longitude <= neLng)))
                      .dicts())
-        elif timestamp > 0 and (oSwLat and oSwLng and oNeLat and oNeLng):
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
             query = (Pokemon
                      .select()
                      .where(((Pokemon.disappear_time > datetime.utcnow()) &
@@ -149,7 +149,7 @@ class Pokemon(BaseModel):
 
     @staticmethod
     def get_active_by_id(ids, swLat, swLng, neLat, neLng):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+        if not (swLat or swLng or neLat or neLng):
             query = (Pokemon
                      .select()
                      .where((Pokemon.pokemon_id << ids) &
@@ -367,21 +367,21 @@ class Pokestop(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+    def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        if not (swLat or swLng or neLat or neLng):
             query = (Pokestop
                      .select()
                      .dicts())
         elif timestamp > 0:
             query = (Pokestop
                      .select()
-                     .where((Pokestop.latitude >= swLat) &
+                     .where(((Pokestop.last_modified > datetime.utcfromtimestamp(timestamp / 1000))) &
+                            (Pokestop.latitude >= swLat) &
                             (Pokestop.longitude >= swLng) &
                             (Pokestop.latitude <= neLat) &
-                            (Pokestop.longitude <= neLng) &
-                            (Pokestop.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                            (Pokestop.longitude <= neLng))
                      .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
             query = (Pokestop
                      .select()
                      .where(((Pokestop.latitude >= swLat) &
@@ -438,21 +438,21 @@ class Gym(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+    def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        if not (swLat or swLng or neLat or neLng):
             results = (Gym
                        .select()
                        .dicts())
         elif timestamp > 0:
             results = (Gym
                        .select()
-                       .where((Gym.latitude >= swLat) &
+                       .where(((Gym.last_modified > datetime.utcfromtimestamp(timestamp / 1000)) &
+                              (Gym.latitude >= swLat) &
                               (Gym.longitude >= swLng) &
                               (Gym.latitude <= neLat) &
-                              (Gym.longitude <= neLng) &
-                              (Gym.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                              (Gym.longitude <= neLng)))
                        .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
             results = (Gym
                        .select()
                        .where(((Gym.latitude >= swLat) &
