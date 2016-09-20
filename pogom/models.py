@@ -89,21 +89,8 @@ class Pokemon(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_encountered_pokemon(encounter_id):
-        query = (Pokemon
-                 .select()
-                 .where((Pokemon.encounter_id == b64encode(str(encounter_id))) &
-                        (Pokemon.disappear_time > datetime.utcnow()))
-                 .dicts()
-                 )
-        pokemon = []
-        for a in query:
-            pokemon.append(a)
-        return pokemon
-
-    @staticmethod
     def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
-        if not (swLat or swLng or neLat or neLng):
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokemon
                      .select()
                      .where(Pokemon.disappear_time > datetime.utcnow())
@@ -381,7 +368,7 @@ class Pokestop(BaseModel):
 
     @staticmethod
     def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
-        if not (swLat or swLng or neLat or neLng):
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokestop
                      .select()
                      .dicts())
@@ -452,7 +439,7 @@ class Gym(BaseModel):
 
     @staticmethod
     def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
-        if not (swLat or swLng or neLat or neLng):
+        if not (swLat and swLng and neLat and neLng):
             results = (Gym
                        .select()
                        .dicts())
@@ -543,17 +530,42 @@ class ScannedLocation(BaseModel):
         primary_key = CompositeKey('latitude', 'longitude')
 
     @staticmethod
-    def get_recent(swLat, swLng, neLat, neLng):
-        query = (ScannedLocation
-                 .select()
-                 .where((ScannedLocation.last_modified >=
-                        (datetime.utcnow() - timedelta(minutes=15))) &
-                        (ScannedLocation.latitude >= swLat) &
-                        (ScannedLocation.longitude >= swLng) &
-                        (ScannedLocation.latitude <= neLat) &
-                        (ScannedLocation.longitude <= neLng))
-                 .order_by(ScannedLocation.last_modified.asc())
-                 .dicts())
+    def get_recent(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        activeTime = (datetime.utcnow() - timedelta(minutes=15))
+        if timestamp > 0:                          # Get only visible and modified scannedlocations
+            query = (ScannedLocation
+                     .select()
+                     .where(((ScannedLocation.last_modified >= datetime.utcfromtimestamp(timestamp / 1000))) &
+                            (ScannedLocation.latitude >= swLat) &
+                            (ScannedLocation.longitude >= swLng) &
+                            (ScannedLocation.latitude <= neLat) &
+                            (ScannedLocation.longitude <= neLng))
+                     .dicts())
+        elif oSwLat and oSwLng and oNeLat and oNeLng:  # Get only newly uncovered visible active scannedlocations (while zooming/moving)
+            query = (ScannedLocation
+                     .select()
+                     .where((((ScannedLocation.last_modified >= activeTime)) &
+                             (ScannedLocation.latitude >= swLat) &
+                             (ScannedLocation.longitude >= swLng) &
+                             (ScannedLocation.latitude <= neLat) &
+                             (ScannedLocation.longitude <= neLng)) &
+                            ~(((ScannedLocation.last_modified >= activeTime)) &
+                              (ScannedLocation.latitude >= oSwLat) &
+                              (ScannedLocation.longitude >= oSwLng) &
+                              (ScannedLocation.latitude <= oNeLat) &
+                              (ScannedLocation.longitude <= oNeLng)))
+                     .dicts())
+        else:                                         # Get only active and visible scannedlocations
+            query = (ScannedLocation
+                     .select()
+                     .where((ScannedLocation.last_modified >=
+                            (datetime.utcnow() - timedelta(minutes=15))) &
+                            (ScannedLocation.latitude >= swLat) &
+                            (ScannedLocation.longitude >= swLng) &
+                            (ScannedLocation.latitude <= neLat) &
+                            (ScannedLocation.longitude <= neLng))
+                     .order_by(ScannedLocation.last_modified.asc())
+                     .dicts())
 
         return list(query)
 
@@ -664,10 +676,19 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
     for cell in cells:
         if config['parse_pokemon']:
-            for p in cell.get('wild_pokemons', []):
+            wild_pokemon = cell.get('wild_pokemons', [])
+            if len(wild_pokemon) > 0:
+                encounter_ids = [b64encode(str(p['encounter_id'])) for p in wild_pokemon]
 
-                # Don't parse pokemon we've already encountered. Avoids last_modified getting updated on rescanning.
-                if Pokemon.get_encountered_pokemon(p['encounter_id']):
+                query = (Pokemon
+                         .select()
+                         .where((Pokemon.disappear_time > datetime.utcnow()) & (Pokemon.encounter_id << encounter_ids))
+                         .dicts())
+
+                encountered_pokemon = [(p['encounter_id'], p['spawnpoint_id']) for p in query]
+
+            for p in wild_pokemon:
+                if (p['encounter_id'], p['spawn_point_id']) in encountered_pokemon:
                     skipped += 1
                     continue
 

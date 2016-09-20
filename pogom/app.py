@@ -94,10 +94,12 @@ class Pogom(Flask):
         lastgyms = request.args.get('lastgyms')
         lastpokestops = request.args.get('lastpokestops')
         lastpokemon = request.args.get('lastpokemon')
+        lastslocs = request.args.get('lastslocs')
 
         d['lastgyms'] = request.args.get('gyms', 'true')
         d['lastpokestops'] = request.args.get('pokestops', 'true')
         d['lastpokemon'] = request.args.get('pokemon', 'true')
+        d['lastslocs'] = request.args.get('scanned', 'true')
 
         newArea = False
         oSwLat = request.args.get('oSwLat')
@@ -109,6 +111,7 @@ class Pogom(Flask):
         d['oSwLng'] = oSwLng
         d['oNeLat'] = oNeLat
         d['oNeLng'] = oNeLng
+
         if oSwLat != swLat:
             d['oSwLat'] = swLat
             newArea = True
@@ -155,8 +158,12 @@ class Pogom(Flask):
                     d['gyms'].update(Gym.get_gyms(swLat, swLng, neLat, neLng, oSwLat=oSwLat, oSwLng=oSwLng, oNeLat=oNeLat, oNeLng=oNeLng))
 
         if request.args.get('scanned', 'true') == 'true':
-            d['scanned'] = ScannedLocation.get_recent(swLat, swLng, neLat,
-                                                      neLng)
+            if lastslocs != 'true':
+                d['scanned'] = ScannedLocation.get_recent(swLat, swLng, neLat, neLng)
+            else:
+                d['scanned'] = ScannedLocation.get_recent(swLat, swLng, neLat, neLng, timestamp=prevtime)
+                if newArea:
+                    d['scanned'] = d['scanned'] + (ScannedLocation.get_recent(swLat, swLng, neLat, neLng, oSwLat=oSwLat, oSwLng=oSwLng, oNeLat=oNeLat, oNeLng=oNeLng))
 
         selected_duration = None
 
