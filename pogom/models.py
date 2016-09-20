@@ -89,6 +89,19 @@ class Pokemon(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
+    def get_encountered_pokemon(encounter_id):
+        query = (Pokemon
+                 .select()
+                 .where((Pokemon.encounter_id == b64encode(str(encounter_id))) &
+                        (Pokemon.disappear_time > datetime.utcnow()))
+                 .dicts()
+                 )
+        pokemon = []
+        for a in query:
+            pokemon.append(a)
+        return pokemon
+
+    @staticmethod
     def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
         if not (swLat or swLng or neLat or neLng):
             query = (Pokemon
@@ -646,11 +659,18 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     pokemons = {}
     pokestops = {}
     gyms = {}
+    skipped = 0
 
     cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
     for cell in cells:
         if config['parse_pokemon']:
             for p in cell.get('wild_pokemons', []):
+
+                # Don't parse pokemon we've already encountered. Avoids last_modified getting updated on rescanning.
+                if Pokemon.get_encountered_pokemon(p['encounter_id']):
+                    skipped += 1
+                    continue
+
                 # time_till_hidden_ms was overflowing causing a negative integer.
                 # It was also returning a value above 3.6M ms.
                 if 0 < p['time_till_hidden_ms'] < 3600000:
@@ -769,10 +789,11 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     if len(gyms):
         db_update_queue.put((Gym, gyms))
 
-    log.info('Parsing found %d pokemons, %d pokestops, and %d gyms',
+    log.info('Parsing found %d pokemons, %d pokestops, and %d gyms, found %d pokemons seen before.',
              len(pokemons),
              len(pokestops),
-             len(gyms))
+             len(gyms),
+             skipped)
 
     db_update_queue.put((ScannedLocation, {0: {
         'latitude': step_location[0],
@@ -781,7 +802,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     }}))
 
     return {
-        'count': len(pokemons) + len(pokestops) + len(gyms),
+        'count': skipped + len(pokemons) + len(pokestops) + len(gyms),
         'gyms': gyms,
     }
 
