@@ -89,8 +89,8 @@ class Pokemon(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+    def get_active(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokemon
                      .select(PokemonIVs, Pokemon)
                      .join(PokemonIVs,
@@ -101,23 +101,26 @@ class Pokemon(BaseModel):
         elif timestamp > 0:
             query = (Pokemon
                      .select()
-                     .where((Pokemon.latitude >= swLat) &
-                            (Pokemon.longitude >= swLng) &
-                            (Pokemon.latitude <= neLat) &
-                            (Pokemon.longitude <= neLng) &
-                            (Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
-                     .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
-            query = (Pokemon
-                     .select()
-                     .where(((Pokemon.latitude >= swLat) &
+                     .where(((Pokemon.last_modified > datetime.utcfromtimestamp(timestamp / 1000)) &
+                             (Pokemon.disappear_time > datetime.utcnow())) &
+                            ((Pokemon.latitude >= swLat) &
                              (Pokemon.longitude >= swLng) &
                              (Pokemon.latitude <= neLat) &
-                             (Pokemon.longitude <= neLng)) &
-                            ~((Pokemon.latitude >= oSwLat) &
+                             (Pokemon.longitude <= neLng)))
+                     .dicts())
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
+            query = (Pokemon
+                     .select()
+                     .where(((Pokemon.disappear_time > datetime.utcnow()) &
+                            (((Pokemon.latitude >= swLat) &
+                              (Pokemon.longitude >= swLng) &
+                              (Pokemon.latitude <= neLat) &
+                              (Pokemon.longitude <= neLng))) &
+                            ~((Pokemon.disappear_time > datetime.utcnow()) &
+                              (Pokemon.latitude >= oSwLat) &
                               (Pokemon.longitude >= oSwLng) &
                               (Pokemon.latitude <= oNeLat) &
-                              (Pokemon.longitude <= oNeLng)))
+                              (Pokemon.longitude <= oNeLng))))
                      .dicts())
         else:
             query = (Pokemon
@@ -152,7 +155,7 @@ class Pokemon(BaseModel):
 
     @staticmethod
     def get_active_by_id(ids, swLat, swLng, neLat, neLng):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokemon
                      .select()
                      .where((Pokemon.pokemon_id << ids) &
@@ -389,21 +392,21 @@ class Pokestop(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+    def get_stops(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokestop
                      .select()
                      .dicts())
         elif timestamp > 0:
             query = (Pokestop
                      .select()
-                     .where((Pokestop.latitude >= swLat) &
+                     .where(((Pokestop.last_modified > datetime.utcfromtimestamp(timestamp / 1000))) &
+                            (Pokestop.latitude >= swLat) &
                             (Pokestop.longitude >= swLng) &
                             (Pokestop.latitude <= neLat) &
-                            (Pokestop.longitude <= neLng) &
-                            (Pokestop.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                            (Pokestop.longitude <= neLng))
                      .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
             query = (Pokestop
                      .select()
                      .where(((Pokestop.latitude >= swLat) &
@@ -460,21 +463,21 @@ class Gym(BaseModel):
         indexes = ((('latitude', 'longitude'), False),)
 
     @staticmethod
-    def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat="", oSwLng="", oNeLat="", oNeLng=""):
-        if swLat is None or swLng is None or neLat is None or neLng is None:
+    def get_gyms(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
+        if not (swLat and swLng and neLat and neLng):
             results = (Gym
                        .select()
                        .dicts())
         elif timestamp > 0:
             results = (Gym
                        .select()
-                       .where((Gym.latitude >= swLat) &
+                       .where(((Gym.last_scanned > datetime.utcfromtimestamp(timestamp / 1000)) &
+                              (Gym.latitude >= swLat) &
                               (Gym.longitude >= swLng) &
                               (Gym.latitude <= neLat) &
-                              (Gym.longitude <= neLng) &
-                              (Gym.last_modified > datetime.utcfromtimestamp(timestamp / 1000)))
+                              (Gym.longitude <= neLng)))
                        .dicts())
-        elif oSwLat > "" and oSwLng > "" and oNeLat > "" and oNeLng > "":
+        elif oSwLat and oSwLng and oNeLat and oNeLng:
             results = (Gym
                        .select()
                        .where(((Gym.latitude >= swLat) &
@@ -668,11 +671,26 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     pokemons = {}
     pokestops = {}
     gyms = {}
+    skipped = 0
 
     cells = map_dict['responses']['GET_MAP_OBJECTS']['map_cells']
     for cell in cells:
         if config['parse_pokemon']:
-            for p in cell.get('wild_pokemons', []):
+            wild_pokemon = cell.get('wild_pokemons', [])
+            if len(wild_pokemon) > 0:
+                encounter_ids = [b64encode(str(p['encounter_id'])) for p in wild_pokemon]
+
+                query = (Pokemon
+                         .select()
+                         .where((Pokemon.disappear_time > datetime.utcnow()) & (Pokemon.encounter_id << encounter_ids))
+                         .dicts())
+
+                encountered_pokemon = [(p['encounter_id'], p['spawnpoint_id']) for p in query]
+            for p in wild_pokemon:
+                if (b64encode(str(p['encounter_id'])), p['spawn_point_id']) in encountered_pokemon:
+                    skipped += 1
+                    continue
+
                 # time_till_hidden_ms was overflowing causing a negative integer.
                 # It was also returning a value above 3.6M ms.
                 if 0 < p['time_till_hidden_ms'] < 3600000:
@@ -823,10 +841,11 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     if len(gyms):
         db_update_queue.put((Gym, gyms))
 
-    log.info('Parsing found %d pokemons, %d pokestops, and %d gyms',
+    log.info('Parsing found %d pokemons, %d pokestops, and %d gyms, found %d pokemons seen before.',
              len(pokemons),
              len(pokestops),
-             len(gyms))
+             len(gyms),
+             skipped)
 
     db_update_queue.put((ScannedLocation, {0: {
         'latitude': step_location[0],
@@ -835,8 +854,7 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
     }}))
 
     return {
-        'count': len(pokemons) + len(pokestops) + len(gyms),
-        'pokemons': pokemons,
+        'count': skipped + len(pokemons) + len(pokestops) + len(gyms),
         'gyms': gyms,
     }
 
