@@ -686,9 +686,8 @@ def parse_map(args, map_dict, step_location, db_update_queue, wh_update_queue):
                          .dicts())
 
                 encountered_pokemon = [(p['encounter_id'], p['spawnpoint_id']) for p in query]
-
             for p in wild_pokemon:
-                if (p['encounter_id'], p['spawn_point_id']) in encountered_pokemon:
+                if (b64encode(str(p['encounter_id'])), p['spawn_point_id']) in encountered_pokemon:
                     skipped += 1
                     continue
 
