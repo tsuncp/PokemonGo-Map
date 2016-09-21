@@ -446,7 +446,7 @@ class Gym(BaseModel):
         elif timestamp > 0:
             results = (Gym
                        .select()
-                       .where(((Gym.last_modified > datetime.utcfromtimestamp(timestamp / 1000)) &
+                       .where(((Gym.last_scanned > datetime.utcfromtimestamp(timestamp / 1000)) &
                               (Gym.latitude >= swLat) &
                               (Gym.longitude >= swLng) &
                               (Gym.latitude <= neLat) &
