@@ -530,42 +530,17 @@ class ScannedLocation(BaseModel):
         primary_key = CompositeKey('latitude', 'longitude')
 
     @staticmethod
-    def get_recent(swLat, swLng, neLat, neLng, timestamp=0, oSwLat=None, oSwLng=None, oNeLat=None, oNeLng=None):
-        activeTime = (datetime.utcnow() - timedelta(minutes=15))
-        if timestamp > 0:                          # Get only visible and modified scannedlocations
-            query = (ScannedLocation
-                     .select()
-                     .where(((ScannedLocation.last_modified >= datetime.utcfromtimestamp(timestamp / 1000))) &
-                            (ScannedLocation.latitude >= swLat) &
-                            (ScannedLocation.longitude >= swLng) &
-                            (ScannedLocation.latitude <= neLat) &
-                            (ScannedLocation.longitude <= neLng))
-                     .dicts())
-        elif oSwLat and oSwLng and oNeLat and oNeLng:  # Get only newly uncovered visible active scannedlocations (while zooming/moving)
-            query = (ScannedLocation
-                     .select()
-                     .where((((ScannedLocation.last_modified >= activeTime)) &
-                             (ScannedLocation.latitude >= swLat) &
-                             (ScannedLocation.longitude >= swLng) &
-                             (ScannedLocation.latitude <= neLat) &
-                             (ScannedLocation.longitude <= neLng)) &
-                            ~(((ScannedLocation.last_modified >= activeTime)) &
-                              (ScannedLocation.latitude >= oSwLat) &
-                              (ScannedLocation.longitude >= oSwLng) &
-                              (ScannedLocation.latitude <= oNeLat) &
-                              (ScannedLocation.longitude <= oNeLng)))
-                     .dicts())
-        else:                                         # Get only active and visible scannedlocations
-            query = (ScannedLocation
-                     .select()
-                     .where((ScannedLocation.last_modified >=
-                            (datetime.utcnow() - timedelta(minutes=15))) &
-                            (ScannedLocation.latitude >= swLat) &
-                            (ScannedLocation.longitude >= swLng) &
-                            (ScannedLocation.latitude <= neLat) &
-                            (ScannedLocation.longitude <= neLng))
-                     .order_by(ScannedLocation.last_modified.asc())
-                     .dicts())
+    def get_recent(swLat, swLng, neLat, neLng):
+        query = (ScannedLocation
+                 .select()
+                 .where((ScannedLocation.last_modified >=
+                        (datetime.utcnow() - timedelta(minutes=15))) &
+                        (ScannedLocation.latitude >= swLat) &
+                        (ScannedLocation.longitude >= swLng) &
+                        (ScannedLocation.latitude <= neLat) &
+                        (ScannedLocation.longitude <= neLng))
+                 .order_by(ScannedLocation.last_modified.asc())
+                 .dicts())
 
         return list(query)
 
