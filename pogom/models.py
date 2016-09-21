@@ -149,7 +149,7 @@ class Pokemon(BaseModel):
 
     @staticmethod
     def get_active_by_id(ids, swLat, swLng, neLat, neLng):
-        if not (swLat or swLng or neLat or neLng):
+        if not (swLat and swLng and neLat and neLng):
             query = (Pokemon
                      .select()
                      .where((Pokemon.pokemon_id << ids) &
